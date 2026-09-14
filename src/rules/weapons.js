@@ -195,8 +195,11 @@ function buildMountConfiguration(level) {
 			) {
 				const mountName = bonus.val.charAt(0).toUpperCase() +
 					bonus.val.slice(1);
-				mountsOut.push(
-					createEmptyMount(mountName));
+				mountsOut.push(createEmptyMount(mountName));
+				numMounts++;
+			}
+			if (bonus.id === 'superheavy_mounting' && numMounts < 3) {
+				mountsOut.push(createEmptyMount('Superheavy'));
 				numMounts++;
 			}
 		}

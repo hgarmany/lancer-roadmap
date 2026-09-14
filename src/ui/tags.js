@@ -5,6 +5,10 @@ import {
 } from '../data/loader.js';
 
 import {
+	roadmap
+} from '../data/roadmap.js';
+
+import {
 	mountTagUpdate,
 	weaponTagUpdate
 } from './updates.js';
@@ -15,6 +19,7 @@ import {
 } from '../rules/weapons.js';
 
 import {
+	ATTACHMENT_ID,
 	getUnusedAttachments,
 	moveAttachment
 } from '../rules/attachments.js';
@@ -24,7 +29,6 @@ import {
 	doesItemHaveTag,
 	getItemNumUses
 } from '../rules/installsCommon.js';
-import { roadmap } from '../data/roadmap.js';
 
 export const ATTACHMENT_TRANSFER_TYPE = 'application/x-lancer-attachment';
 
@@ -247,38 +251,41 @@ export function renderMountTags(level, attachments, mount) {
 
 		const label = document.createElement('span');
 		label.textContent = attachment.label;
+		tag.append(label);
 
-		const remove = document.createElement('button');
-		remove.className = 'clear';
-		remove.type = 'button';
-		remove.title = `Remove ${attachment.label}`;
+		const mountIdx = Number(mount.dataset.mountIdx) ?? null;
+		const source = deepCopyMounts(level)?.[mountIdx];
+		
+		if (source.type !== 'Heavy' ||
+			!attachments.some(item =>
+				item.id === ATTACHMENT_ID.SUPERHEAVY_BRACING)) {
 
-		tag.addEventListener('dragstart', event => {
-			if (event.target === remove) {
-				event.preventDefault();
-				return;
-			}
+			tag.addEventListener('dragstart', event => {
+				setAttachmentTransferData(event, level,
+					{
+						level,
+						type: 'mount',
+						id: attachment.id,
+						mountIdx: Number(mount.dataset.mountIdx)
+					}
+				);
+			});
+		
+			const remove = document.createElement('button');
+			remove.className = 'clear';
+			remove.type = 'button';
+			remove.title = `Remove ${attachment.label}`;
 
-			setAttachmentTransferData(event, level,
-				{
-					level,
-					type: 'mount',
-					id: attachment.id,
-					mountIdx: Number(mount.dataset.mountIdx)
-				}
-			);
-		});
+			remove.addEventListener('click', event => {
+				event.stopPropagation();
 
-		remove.addEventListener('click', event => {
-			event.stopPropagation();
-			const mountIdx = Number(mount.dataset.mountIdx) ?? null;
-			const source = deepCopyMounts(level)?.[mountIdx];
+				if (moveAttachment({ id: attachment.id, source }))
+					mountTagUpdate(level, [mountIdx]);
+			});
 
-			if (moveAttachment({ id: attachment.id, source }))
-				mountTagUpdate(level, [mountIdx]);
-		});
+			tag.append(remove);
+		}
 
-		tag.append(label, remove);
 		tags.append(tag);
 	}
 

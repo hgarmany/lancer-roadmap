@@ -214,15 +214,25 @@ export function updateAppliedAttachments(level) {
 
 	for (let i = 0; i < mounts.length; i++) {
 		let mountChanged = false;
+		// mount attachments
 		mounts[i].attachments = mounts[i].attachments?.filter(attachment => {
 			if (eligibleIds.includes(attachment))
 				return true;
 			mountChanged = true;
 			return false;
-		});
+		}) ?? [];
+
+		if (mounts[i].type === 'Heavy' &&
+			mounts.some(mount =>
+				mount.type === 'Superheavy' && mount.weapons[0]?.id)) {
+			mounts[i].attachments.push(ATTACHMENT_ID.SUPERHEAVY_BRACING);
+			mountChanged = true;
+		}
+		
 		if (mounts[i].attachments?.length === 0)
 			delete mounts[i].attachments;
 
+		// weapon attachments
 		for (const weapon of mounts[i].weapons) {
 			weapon.attachments?.filter(attachment => {
 				if (eligibleIds.includes(attachment))
