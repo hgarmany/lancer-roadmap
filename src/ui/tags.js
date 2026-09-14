@@ -240,6 +240,16 @@ function tryLimitedTag(tags, item, level) {
 	tags.append(tag);
 }
 
+function tryUniqueTag(tags, item, level) {
+	if (!doesItemHaveTag(item, TAGS.UNIQUE))
+		return;
+
+	const tag = document.createElement('div');
+	tag.className = 'tag unique';
+	tag.textContent = 'Unique';
+	tags.append(tag);
+}
+
 export function renderMountTags(level, attachments, mount) {
 	const tags = document.createElement('div');
 	tags.className = 'mount-tags';
@@ -327,6 +337,7 @@ export function renderWeaponTags(level, weapon, mountIdx, slotIdx) {
 	tryAITag(tags, srcWeapon);
 	tryExoticTag(tags, srcWeapon);
 	tryLimitedTag(tags, srcWeapon, level);
+	tryUniqueTag(tags, srcWeapon);
 
 	tags.style.display = tags.children.length ? 'flex' : 'none';
 	return tags;
@@ -341,6 +352,7 @@ export function renderSystemTags(level, systemId) {
 	tryAITag(tags, system);
 	tryExoticTag(tags, system);
 	tryLimitedTag(tags, system, level);
+	tryUniqueTag(tags, system);
 
 	tags.style.display = tags.children.length ? 'flex' : 'none';
 	return tags;

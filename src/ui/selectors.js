@@ -19,6 +19,7 @@ import {
 } from '../data/loader.js';
 
 import {
+	MAX_SKILL_RANK,
 	MAX_TALENT_RANK,
 	MAX_LICENSE_RANK,
 	ROMAN_NUMERALS
@@ -45,6 +46,7 @@ import {
 } from './updates.js';
 
 import {
+	getSkillTriggerRank,
 	isSkillTriggerEligible
 } from '../rules/skillTriggers.js';
 
@@ -111,6 +113,7 @@ export const SELECT_TEMPLATE = Object.freeze({
 		type: 'skill-trigger',
 		title: 'Skill Trigger',
 		allowClear: true,
+		redrawLabels: true,
 		getSrcItems: () => srcData.skillTriggers,
 		readLevel: (level) => roadmap.ll[level].skillTriggerIds,
 		write: ({ level, idx, id }) => {
@@ -119,9 +122,15 @@ export const SELECT_TEMPLATE = Object.freeze({
 			incrementFromLevel(cumulativeCatalog.skillTriggers, id, level);
 			decrementFromLevel(cumulativeCatalog.skillTriggers, oldId, level);
 		},
-		getLabel: ({ id }) => {
-			return id ? (srcData.skillTriggers.get(id)?.name ?? '') :
-				'Select a skill trigger';
+		getLabel: ({ level, id, selectedId }) => {
+			if (!id)
+				return 'Select a skill trigger';
+
+			const rank = getSkillTriggerRank(level, id, selectedId);
+			const showRank = rank < MAX_SKILL_RANK;
+
+			return srcData.skillTriggers.get(id)?.name +
+				(showRank ? ` ${ROMAN_NUMERALS[rank]}` : '');
 		},
 		getDescription: ({ id }) => srcData.skillTriggers.get(id)?.description,
 		getEligibility: ({ level, id, selectedId }) =>

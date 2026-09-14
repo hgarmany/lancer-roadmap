@@ -15,6 +15,20 @@ import {
 const skillTriggers = cumulativeCatalog.skillTriggers;
 
 /**
+ * Gets the appropriate display rank for the id'd skill trigger
+ * 
+ * @param {number} level
+ * @param {string} id
+ * @param {string} selectedId
+ * @returns {number}
+ */
+export function getSkillTriggerRank(level, id, selectedId = null) {
+	console.log(skillTriggers);
+	const rank = skillTriggers[level].get(id) ?? 0;
+	return (id === selectedId) ? rank - 1 : rank;
+}
+
+/**
  * Determine whether the skill with the given id
  * is a valid choice at this level
  * 
