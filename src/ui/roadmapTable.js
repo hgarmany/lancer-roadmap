@@ -176,6 +176,7 @@ function renderFrame(level) {
 	const icon = document.createElement('img');
 	icon.id = `${SELECT_TEMPLATE.FRAME.type}-ll-${level}-icon`;
 	icon.src = getFrameImageSrc(activeFrameId) ?? '';
+	icon.referrerPolicy = 'no-referrer';
 
 	const menu = renderMenu(level, SELECT_TEMPLATE.FRAME);
 

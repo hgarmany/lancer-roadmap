@@ -1,6 +1,9 @@
 name: deploy-lancer-roadmap
 run-name: Lancer Roadmap
-on: [push]
+on:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -12,18 +15,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  cleanup:
-    runs-on: ubuntu-latest
-    permissions: write-all
-
-    steps:
-      - name: Delete old deployments
-        uses: strumwolf/delete-deployment-environment@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          environment: github-pages
-          onlyRemoveDeployments: true
-
   deploy:
     environment:
       name: github-pages
@@ -58,3 +49,42 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+  cleanup:
+    name: Delete old deployments
+    needs: deploy
+    if: ${{ needs.deploy.result == 'success' }}
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      deployments: write
+
+    steps:
+      - name: Mark previous deployments inactive and delete
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          mapfile -t old_deployments < <(
+            gh api --paginate \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/$GH_REPO/deployments?environment=github-pages&per_page=100" \
+              --jq '.[] | [.id, .created_at] | @tsv' |
+            sort -t$'\t' -k2,2r |
+            tail -n +2 |
+            cut -f1
+          )
+
+          for deployment_id in "${old_deployments[@]}"; do
+            gh api \
+              --method POST \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/$GH_REPO/deployments/$deployment_id/statuses" \
+              -f state=inactive \
+              >/dev/null
+            gh api \
+              --method DELETE \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/$GH_REPO/deployments/$deployment_id"
+          done

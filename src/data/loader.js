@@ -29,6 +29,8 @@ import {
 
 const LCP_STORAGE_KEY = 'lancer-roadmap-lcp-packages';
 const MAX_LCP_BYTES = 50 * 1024 * 1024;
+const MAX_LCP_FILE_COUNT = 100;
+const MAX_LCP_ITEM_COUNT = 200;
 
 const LCP_COLLECTIONS = Object.freeze([
 	'skills',
@@ -113,6 +115,72 @@ function getPackageId(manifest, fileName) {
 }
 
 /**
+ * Performs several archive-level checks on an LCP
+ * If all pass, proceed to extract compressed data
+ *
+ * @param {Uint8Array} bytes
+ * @param {string} fileName
+ * @returns {Object<string, Uint8Array>}
+ */
+function safeLcpUnzip(bytes, fileName) {
+	let fileCount = 0;
+	let expandedBytes = 0;
+	let rejectionMessage = '';
+
+	let archive;
+	try {
+		archive = unzipSync(bytes, {
+			filter: file => {
+				if (rejectionMessage)
+					return false;
+
+				const path = file.name.replaceAll('\\', '/');
+				const isDirectory = path.endsWith('/');
+				if (isDirectory)
+					return false;
+
+				fileCount++;
+				if (fileCount > MAX_LCP_FILE_COUNT) {
+					rejectionMessage = `${fileName} contains too many files.`;
+					return false;
+				}
+
+				if (!path.toLowerCase().endsWith('.json')) {
+					rejectionMessage = `${fileName} contains a non-JSON file: ${file.name}`;
+					return false;
+				}
+
+				if (!Number.isSafeInteger(file.originalSize) || file.originalSize < 0) {
+					rejectionMessage = `${fileName} contains a file with an invalid size.`;
+					return false;
+				}
+
+				expandedBytes += file.originalSize;
+				if (expandedBytes > MAX_LCP_BYTES) {
+					rejectionMessage = `${fileName} expands beyond the 50 MB safety limit.`;
+					return false;
+				}
+
+				return true;
+			}
+		});
+	}
+	catch {
+		throw new Error('The selected file is not a readable LCP/ZIP archive.');
+	}
+
+	if (rejectionMessage)
+		throw new Error(rejectionMessage);
+
+	const actualExpandedBytes = Object.values(archive)
+		.reduce((total, contents) => total + contents.byteLength, 0);
+	if (actualExpandedBytes > MAX_LCP_BYTES)
+		throw new Error(`${fileName} expands beyond the 50 MB safety limit.`);
+
+	return archive;
+}
+
+/**
  * Read the supported source data from an LCP archive
  *
  * @param {Uint8Array} bytes
@@ -125,13 +193,7 @@ export function parseLcpArchive(bytes, fileName = 'package.lcp') {
 	if (bytes.byteLength > MAX_LCP_BYTES)
 		throw new Error('The selected LCP is larger than 50 MB.');
 
-	let archive;
-	try {
-		archive = unzipSync(bytes);
-	}
-	catch {
-		throw new Error('The selected file is not a readable LCP/ZIP archive.');
-	}
+	const archive = safeLcpUnzip(bytes, fileName);
 
 	const jsonFiles = new Map();
 	for (const [path, contents] of Object.entries(archive))
@@ -165,16 +227,20 @@ export function parseLcpArchive(bytes, fileName = 'package.lcp') {
 			continue;
 		}
 
+		let parsed;
 		try {
-			const parsed = JSON.parse(
+			parsed = JSON.parse(
 				strFromU8(collectionFile).replace(/^\uFEFF/, ''));
-			collections[collectionName] = normalizeCollection(parsed)
-				.filter(item => typeof item.id === 'string' && item.id);
-			itemCount += collections[collectionName].length;
 		}
 		catch {
 			throw new Error(`${collectionName}.json is not valid JSON.`);
 		}
+
+		collections[collectionName] = normalizeCollection(parsed)
+			.filter(item => typeof item.id === 'string' && item.id);
+		itemCount += collections[collectionName].length;
+		if (itemCount > MAX_LCP_ITEM_COUNT)
+			throw new Error(`${fileName} exceeds the import limit on new items.`);
 	}
 
 	if (itemCount === 0)

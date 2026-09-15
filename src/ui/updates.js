@@ -183,6 +183,7 @@ export function activeFrameWaterfall(selectValue, level) {
 		const icon = document.getElementById(
 			`${SELECT_TEMPLATE.FRAME.type}-ll-${i}-icon`);
 		icon.src = getFrameImageSrc(selectValue) ?? '';
+		icon.referrerPolicy = 'no-referrer';
 
 		// update frame selector
 		const selector = document.getElementById(
