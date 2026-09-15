@@ -407,7 +407,7 @@ export function renderOption(template, source, context) {
 	option.value = context.id;
 
 	// selections with supported manufacturers get logos
-	const logoUrl = MANUFACTURER_LOGOS.get(source);
+	const logoUrl = false;// MANUFACTURER_LOGOS.get(source);
 	if (logoUrl) {
 		const icon = document.createElement('img');
 		icon.className = 'selector-source-icon';

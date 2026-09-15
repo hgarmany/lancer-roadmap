@@ -229,7 +229,8 @@ export function renderHASETooltip(level) {
  * @returns {string}
  */
 export function getFrameImageSrc(frameId) {
-	return srcData.frames.get(frameId)?.image_url;
+	// return srcData.frames.get(frameId)?.image_url;
+	return null;
 }
 
 /**
@@ -244,18 +245,21 @@ export function setStatValue(bubble, output, statId, value) {
 	output.value = value;
 
 	if (statId === 'size') {
-		bubble.classList.add('size-stat-bubble');
-
 		const template = document.createElement('template');
-		template.innerHTML = SIZE_ICON_SVGS[value].trim();
-		const icon = template.content.firstElementChild;
-		icon.classList.add('size-stat-icon');
-		
-		const previousIcon = bubble.querySelector('.size-stat-icon');
-		if (previousIcon)
-			previousIcon.replaceWith(icon);
-		else
-			bubble.append(icon);
+		//template.innerHTML = SIZE_ICON_SVGS[value].trim();
+
+		if (template.content.firstElementChild) {
+			bubble.classList.add('size-stat-bubble');
+
+			const icon = template.content.firstElementChild;
+			icon.classList.add('size-stat-icon');
+
+			const previousIcon = bubble.querySelector('.size-stat-icon');
+			if (previousIcon)
+				previousIcon.replaceWith(icon);
+			else
+				bubble.append(icon);
+		}
 		
 		output.textContent = value === 0.5 ? ' ½' : ` ${value}`;
 	}

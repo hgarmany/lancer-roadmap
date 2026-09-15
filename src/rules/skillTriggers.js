@@ -23,7 +23,6 @@ const skillTriggers = cumulativeCatalog.skillTriggers;
  * @returns {number}
  */
 export function getSkillTriggerRank(level, id, selectedId = null) {
-	console.log(skillTriggers);
 	const rank = skillTriggers[level].get(id) ?? 0;
 	return (id === selectedId) ? rank - 1 : rank;
 }

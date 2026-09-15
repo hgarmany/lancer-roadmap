@@ -78,6 +78,7 @@ body {
 
 main {
 	padding: 1rem;
+	padding-bottom: 4.5rem;
 }
 
 header {
@@ -374,7 +375,7 @@ html[data-exotics=true] .exotics-name::after {
 .roadmap-container {
 	border: 1px solid transparent;
 	border-radius: 1rem 1rem 0 0;
-	padding-bottom: 1rem;
+	padding-bottom: 0.5rem;
 	overflow-x: auto;
 }
 
@@ -1126,4 +1127,52 @@ select {
 	padding: 0.1rem 0.5rem;
 	margin-bottom: 0.5rem;
 	white-space: nowrap;
+}
+
+footer {
+	box-sizing: border-box;
+	position: fixed;
+	bottom: 0;
+	width: 100%;
+	display: flex;
+	border-top: 4px solid var(--primary);
+	background-color: var(--surface);
+	padding: 0 1rem;
+	justify-content: space-between;
+	z-index: 10;
+}
+
+#footer-menu {
+	display: grid;
+	grid-template-columns: 50% 50%;
+	padding: 0.75rem 0;
+	font-family: var(--header-font);
+	font-weight: 900;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	align-content: center;
+	gap: 0.2rem;
+	white-space: nowrap;
+}
+
+#license-mark {
+	display: block;
+	width: 12rem;
+	max-width: 100%;
+}
+
+.license-image {
+	display: block;
+	width: 100%;
+	height: 4rem;
+}
+
+.license-image.dark {
+	display: none;
+}
+html[data-theme="gms-dark"] .license-image.light {
+	display: none;
+}
+html[data-theme="gms-dark"] .license-image.dark {
+	display: block;
 }
