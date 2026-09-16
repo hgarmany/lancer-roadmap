@@ -118,7 +118,8 @@ export function renderPackageList(packages, isImport, eventLCP) {
 
 		const remove = document.createElement('button');
 		remove.type = 'button';
-		remove.textContent = 'Remove';
+		remove.className = 'clear';
+		remove.title = `Remove ${lcp.name} from available data`
 		remove.addEventListener('click', () => removeLCP(lcp));
 
 		entry.append(label, remove);

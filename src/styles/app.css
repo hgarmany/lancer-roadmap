@@ -221,6 +221,10 @@ header {
 	cursor: pointer;
 }
 
+#lcp-file:hover::file-selector-button {
+	background-color: color-mix(in srgb, var(--on-strong) 25%, var(--primary));
+}
+
 #lcp-packages {
 	display: grid;
 	gap: 0.5rem;
@@ -642,10 +646,14 @@ select {
 	display: grid;
 }
 
+#lcp-panel .clear {
+	position: relative;
+	display: grid;
+}
+
 .clear:hover,
 .clear:focus-visible {
-	background-color: color-mix(in srgb, var(--surface-raised) 75%, transparent);;
-
+	background-color: color-mix(in srgb, var(--surface-raised) 75%, transparent);
 }
 
 .selector-menu {
