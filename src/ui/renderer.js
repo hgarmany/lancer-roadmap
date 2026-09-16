@@ -18,6 +18,7 @@ import {
 } from './roadmapTable.js';
 
 import {
+	headerButtons,
 	roadmapName,
 	maxLevelInput,
 	themeToggle,
@@ -28,7 +29,9 @@ import {
 	levelRail,
 	roadmapShell,
 	roadmapContainer,
-	tableBody
+	tableBody,
+	modalLayer,
+	modalDialog
 } from './renderModules.js';
 
 import {
@@ -89,7 +92,7 @@ function resizeRoadmapName() {
 	roadmapName.style.width = `${roadmapName.scrollWidth}px`;
 }
 
-function refreshRoadmapHeader() {
+function refreshRoadmapMenu() {
 	roadmapName.value = roadmap.name;
 	resizeRoadmapName();
 	maxLevelInput.value = String(roadmap.maxLevel);
@@ -97,14 +100,28 @@ function refreshRoadmapHeader() {
 	document.documentElement.dataset.exotics = roadmap.allowExotics;
 }
 
+export function configureHeader() {
+	headerButtons?.addEventListener('click', event => {
+		const button = event.target.closest?.('button[data-id]');
+		if (!button || !event.currentTarget.contains(button))
+			return;
+
+		const buttonId = button.dataset.id;
+
+		modalDialog.textContent = buttonId;
+
+		modalLayer.hidden = false;
+	});
+}
+
 /**
  * Connect the roadmap name and max LL fields to table + roadmap data
  */
-export function configureHeader() {
+export function configureToolMenu() {
 	const storedExotics = localStorage.getItem('lancer-roadmap-exotics');
 	if (storedExotics !== null)
 		roadmap.allowExotics = storedExotics === 'true';
-	refreshRoadmapHeader();
+	refreshRoadmapMenu();
 
 	roadmapName.addEventListener('change', event => {
 		roadmap.name = event.currentTarget.value;
@@ -139,7 +156,7 @@ export function configureHeader() {
 		try {
 			await loadRoadmapFile(file);
 			initializeCatalog();
-			refreshRoadmapHeader();
+			refreshRoadmapMenu();
 			rerenderRoadmap();
 		}
 		catch (error) {
@@ -180,6 +197,12 @@ export function configureHeader() {
 		}
 
 		positionLevelLabels();
+	});
+}
+
+export function configureModal() {
+	modalLayer.addEventListener('click', event => {
+		modalLayer.hidden = true;
 	});
 }
 

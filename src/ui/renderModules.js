@@ -77,6 +77,8 @@ const SIZE_ICON_SVGS = Object.freeze({
 	3: sizeThreeSvg
 });
 
+export const headerButtons = document.getElementById('header-buttons');
+
 export const roadmapName = document.getElementById('roadmap-name');
 export const maxLevelInput = document.getElementById('roadmap-max-level');
 export const themeToggle = document.getElementById('theme-toggle');
@@ -96,6 +98,9 @@ export const roadmapShell = document.getElementById("roadmap-shell");
 export const roadmapContainer = document.querySelector(".roadmap-container");
 export const tableBody = document.getElementById("roadmap-body");
 const tableHead = document.querySelector("#roadmap-table thead");
+
+export const modalLayer = document.getElementById('modal-layer');
+export const modalDialog = document.getElementById('modal-dialog');
 
 export function renderPackageList(packages, isImport, eventLCP) {
 	lcpPackages.replaceChildren();

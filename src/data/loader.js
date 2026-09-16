@@ -29,7 +29,7 @@ import {
 
 const LCP_STORAGE_KEY = 'lancer-roadmap-lcp-packages';
 const MAX_LCP_BYTES = 50 * 1024 * 1024;
-const MAX_LCP_FILE_COUNT = 100;
+const MAX_LCP_FILE_COUNT = 20;
 const MAX_LCP_ITEM_COUNT = 200;
 
 const LCP_COLLECTIONS = Object.freeze([

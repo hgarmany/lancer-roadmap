@@ -21,8 +21,29 @@
 	<link rel="stylesheet" href="/src/styles/app.css">
 </head>
 <body>
+	<header>
+		<div id="header-buttons">
+			<button data-id="tutorial">Tutorial</button>
+			<button data-id="lcps">Non-Core Content</button>
+			<button data-id="contact">Contact</button>
+			<button data-id="license">License</button>
+		</div>
+		<div id="title">
+			Lancer Roadmap
+		</div>
+		<a id="license-mark" target="_blank"
+		href="https://massifpress.com/legal"
+		title="Lancer Third Party License">
+			<img class="license-image light"
+				src="src/assets/lancer_light.svg"
+				alt="Lancer Third Party License">
+			<img class="license-image dark"
+				src="src/assets/lancer_dark.svg"
+				alt="Lancer Third Party License">
+		</a>
+	</header>
 	<main id="app">
-		<header>
+		<section id="menu-bar">
 			<input id="roadmap-name"
 				   type="text"
 				   aria-label="Lancer roadmap name">
@@ -52,18 +73,18 @@
 				</div>
 			</details>
 
-			<label class="header-btn theme-toggle">
+			<label class="menu-btn theme-toggle">
 				<input id="theme-toggle"
-					   class="header-btn-input"
+					   class="menu-btn-input"
 					   type="checkbox"
 					   role="switch"
 					   aria-label="Toggle GMS color theme">
 				<strong class="theme-name"></strong>
 			</label>
 
-			<label class="header-btn">
+			<label class="menu-btn">
 				<input id="exotics-toggle"
-					   class="header-btn-input exotics-btn-input"
+					   class="menu-btn-input exotics-btn-input"
 					   type="checkbox"
 					   role="switch"
 					   aria-label="Enable/disable exotic components">
@@ -72,7 +93,7 @@
 			</label>
 
 			<button id="load-btn"
-					class="header-btn"
+					class="menu-btn"
 					title="Load roadmap from file">
 				<i class="fa fa-folder-open"></i>
 			</button>
@@ -82,11 +103,11 @@
 				   hidden>
 
 			<button id="save-btn"
-					class="header-btn"
+					class="menu-btn"
 					title="Save roadmap to file">
 				<i class="fa fa-save"></i>
 			</button>
-		</header>
+		</section>
 		<section id="roadmap-shell" class="roadmap-shell">
 			<aside class="level-rail">
 			</aside>
@@ -109,24 +130,9 @@
 			</div>
 		</section>
 	</main>
-	<footer>
-		<div id="footer-menu">
-			<div>Tutorial</div>
-			<div>Third Party Content</div>
-			<div>Contact</div>
-			<div>License</div>
-		</div>
-		<a id="license-mark" target="_blank"
-		   href="https://massifpress.com/legal"
-		   title="Lancer Third Party License">
-			<img class="license-image light"
-				src="src/assets/lancer_light.svg"
-				alt="Lancer Third Party License">
-			<img class="license-image dark"
-				src="src/assets/lancer_dark.svg"
-				alt="Lancer Third Party License">
-		</a>
-	</footer>
+	<div id="modal-layer" hidden>
+		<div id="modal-dialog"></div>
+	</div>
 	<div id="selector-overlay"></div>
 
 	<script type="module" src="/src/main.js"></script>

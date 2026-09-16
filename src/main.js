@@ -15,6 +15,8 @@ import {
 
 import {
 	configureHeader,
+	configureToolMenu,
+	configureModal,
 	initializeRenderPipeline
 } from './ui/renderer.js';
 
@@ -23,6 +25,8 @@ createDefaultRoadmap();
 
 // initialize roadmap planner
 configureHeader();
+configureToolMenu();
+configureModal();
 initializeCatalog();
 initializeRenderPipeline();
 configureLcpManager();
