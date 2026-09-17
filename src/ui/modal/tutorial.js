@@ -119,7 +119,7 @@ const tutorialContent = `
 let exampleLicenseId = null;
 let systemSelector;
 
-const exampleSystem = SELECT_TEMPLATE.SYSTEM;
+const exampleSystem = { ...SELECT_TEMPLATE.SYSTEM };
 exampleSystem.getEligibility = ({ id }) => isExampleSystemAvailable(id, exampleLicenseId);
 exampleSystem.changeEvent = selector => {
 	setSelectorClass(selector, 'occupied', selector.value);
@@ -127,7 +127,7 @@ exampleSystem.changeEvent = selector => {
 		!isExampleSystemAvailable(selector.value, exampleLicenseId));
 };
 
-const exampleLicense = SELECT_TEMPLATE.LICENSE;
+const exampleLicense = { ...SELECT_TEMPLATE.LICENSE };
 exampleLicense.getEligibility = () => true;
 exampleLicense.changeEvent = selector => {
 	exampleLicenseId = selector.value || null;
