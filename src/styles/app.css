@@ -17,7 +17,7 @@
 }
 
 html[data-theme="gms-light"] {
-	--background: #f4f4f4;
+	--background: #e6e6e6;
 	--grid-line: #d8d8d8;
 	--surface: #ffffff;
 	--surface-raised: #c4c4c4;
@@ -76,6 +76,13 @@ body {
 	background-size: 24px 24px;
 }
 
+.inline-header {
+	font-family: var(--header-font);
+	font-weight: 900;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
 main {
 	padding: 1rem 1rem 0.5rem 1rem;
 }
@@ -124,25 +131,20 @@ header {
 	white-space: nowrap;
 }
 
-#license-mark {
+.license-mark {
 	display: block;
-	width: 12rem;
+	width: 10rem;
 	max-width: 100%;
 }
 
-.license-image {
-	display: block;
-	width: 100%;
-	height: 4rem;
+.license-mark.dark {
+	display: none;
 }
 
-.license-image.dark {
+html[data-theme="gms-dark"] .license-mark.light {
 	display: none;
 }
-html[data-theme="gms-dark"] .license-image.light {
-	display: none;
-}
-html[data-theme="gms-dark"] .license-image.dark {
+html[data-theme="gms-dark"] .license-mark.dark {
 	display: block;
 }
 
@@ -302,11 +304,15 @@ html[data-theme="gms-dark"] .license-image.dark {
 	justify-content: space-between;
 }
 
-#lcp-packages button {
+#lcp-packages .clear {
 	border: 1px solid var(--error);
 	padding: 0.15rem 0.5rem;
 	background-color: color-mix(in srgb, var(--error) 14%, var(--surface));
-	color: var(--error);
+}
+
+#lcp-packages .clear:before,
+#lcp-packages .clear:after {
+	background-color: var(--error);
 }
 
 #lcp-status {
@@ -468,7 +474,7 @@ html[data-exotics=true] .exotics-name::after {
 	color: var(--on-strong);
 	font-size: large;
 	font-weight: 900;
-	letter-spacing: 0.05rem;
+	letter-spacing: 0.08rem;
 
 	writing-mode: tb-rl;
 	transform: rotate(-180deg);
@@ -504,7 +510,7 @@ html[data-exotics=true] .exotics-name::after {
 	font-family: var(--header-font);
 	font-weight: 900;
 	text-transform: uppercase;
-	letter-spacing: 0.1em;
+	letter-spacing: 0.08em;
 }
 
 #roadmap-max-level,
@@ -712,13 +718,15 @@ select {
 	display: grid;
 }
 
-#lcp-panel .clear {
+#lcp-packages .clear {
 	position: relative;
 	display: grid;
 }
 
 .clear:hover,
-.clear:focus-visible {
+.clear:focus-visible,
+#lcp-packages button.clear:hover,
+#lcp-packages button.clear:focus-visible {
 	background-color: color-mix(in srgb, var(--surface-raised) 75%, transparent);
 }
 
@@ -730,7 +738,7 @@ select {
 	overflow-y: auto;
 	border: 1px solid var(--border);
 	border-radius: 0.5rem;
-	background-color: var(--surface);
+	background-color: var(--background);
 	box-shadow: 0 0.35rem 0.8rem color-mix(in srgb, var(--background) 35%, transparent);
 }
 
@@ -867,7 +875,7 @@ select {
 	height: 100%;
 	font-family: var(--header-font);
 	font-weight: 900;
-	letter-spacing: 0.1em;
+	letter-spacing: 0.08em;
 	text-transform: uppercase;
 	white-space: nowrap;
 }
@@ -1255,17 +1263,45 @@ select {
 
 .modal-actions button,
 .modal-actions a {
-	display: inline-flex;
-	align-items: center;
-	border: 1px solid var(--border);
 	padding: 0.5rem 0.75rem;
 	background-color: var(--surface);
 	color: var(--text);
-	cursor: pointer;
+	text-decoration: none;
 }
 
 .modal-actions button:hover,
 .modal-actions a:hover {
 	border-color: var(--focus);
+	background-color: var(--surface);
 	color: var(--focus);
+}
+
+.modal-text-box {
+	margin-top: 1.25rem;
+	border: 1px solid var(--border);
+	padding: 1rem;
+	background-color: var(--surface);
+}
+
+.modal-text-box .menu-btn:not(:hover) {
+	background-color: var(--primary);
+}
+
+.modal-text-box :is(h1, h2, h3, h4, h5, h6) {
+	margin-top: 0;
+	font-family: var(--header-font);
+	font-weight: 900;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.tutorial-selector-examples {
+	display: flex;
+	gap: 2rem;
+}
+
+.inline-components {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
 }

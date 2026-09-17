@@ -213,7 +213,7 @@ export function cleanRoadmapAfterLcpRemove(sourceData) {
 			// remove invalid weapons and attachments
 			mount.weapons.map(weapon => {
 				if (sourceData.weapons.has(weapon.id)) {
-					weapon.attachments.filter(attachment =>
+					weapon.attachments?.filter(attachment =>
 						attachment === ATTACHMENT_ID.OVERPOWER_CALIBER ||
 						sourceData.mods.has(attachment)
 					)

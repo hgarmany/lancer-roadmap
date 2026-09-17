@@ -246,8 +246,8 @@ export function renderLevelRow(level) {
 		renderCellType(CELL.LEVELUP, level),
 		renderCellType(CELL.FRAME, level),
 		renderCellType(CELL.STATS, level),
-		renderCellType(CELL.MOUNTS, level),
-		renderCellType(CELL.SYSTEMS, level)
+		renderCellType(CELL.SYSTEMS, level),
+		renderCellType(CELL.MOUNTS, level)
 	);
 
 	return row;

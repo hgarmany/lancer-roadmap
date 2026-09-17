@@ -79,7 +79,7 @@ function refreshInheritedCellState(level, type) {
  * @param {Object} template
  * @param {Object} extraContext
  */
-function refreshSelector(
+export function refreshSelector(
 	selector,
 	level,
 	selectedId,

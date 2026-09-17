@@ -1,3 +1,7 @@
+import {
+	setSelectorOpen
+} from '../selectors.js';
+
 const modalLayer = document.getElementById('modal-layer');
 const modalDialog = document.getElementById('modal-dialog');
 const modalTitle = document.getElementById('modal-title');
@@ -11,6 +15,8 @@ const modalContent = {
 };
 
 function closeModal() {
+	for (const selector of modalBody.querySelectorAll('.custom-select.open'))
+		setSelectorOpen(selector, false);
 	modalLayer.hidden = true;
 }
 

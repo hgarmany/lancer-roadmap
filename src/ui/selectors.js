@@ -184,7 +184,7 @@ export const SELECT_TEMPLATE = Object.freeze({
 			if (!id)
 				return 'Select a license';
 
-			const rank = getLicenseRank(level, id, selectedId);
+			const rank = level ? getLicenseRank(level, id, selectedId) : 0;
 			const showRank = rank < MAX_LICENSE_RANK;
 
 			return srcData.licenses.get(id)?.name +
@@ -391,6 +391,8 @@ export function setSelectorOpen(selector, doOpen) {
 	selector.classList.toggle('open', doOpen);
 	const menu = selectorMenus.get(selector);
 	if (!doOpen) {
+		if (activeSelector === selector)
+			activeSelector = null;
 		if (menu && menu.parentElement !== selector)
 			selector.append(menu);
 		return;
