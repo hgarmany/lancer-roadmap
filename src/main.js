@@ -16,9 +16,12 @@ import {
 import {
 	configureHeader,
 	configureToolMenu,
-	configureModal,
 	initializeRenderPipeline
 } from './ui/renderer.js';
+
+import {
+	configureModal
+} from './ui/modal/modal.js';
 
 loadSourceData();
 createDefaultRoadmap();

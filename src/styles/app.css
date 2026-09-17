@@ -499,7 +499,8 @@ html[data-exotics=true] .exotics-name::after {
 
 .roadmap-table thead th,
 .menu-label,
-.stat-label {
+.stat-label,
+#modal-header {
 	font-family: var(--header-font);
 	font-weight: 900;
 	text-transform: uppercase;
@@ -1216,10 +1217,55 @@ select {
 	left: 50%;
 	top: 50%;
 	transform: translate(-50%,-50%);
-	
-	width: fit-content;
-	border: 1px solid var(--primary);
-	border-radius: 1rem;
+}
+
+#modal-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0.5rem;
+	text-align: center;
+
+	background-color: var(--table-header);
+	color: var(--background);
+}
+
+#modal-title {
+	flex: 1;
+}
+
+#modal-body {
+	min-height: 0;
+	overflow-y: auto;
 	background-color: var(--background);
-	padding: 2rem;
+	padding: 1rem 2rem 2rem 2rem;
+
+	border: 2px solid var(--primary);
+	border-top: none;
+	border-radius: 0 0 1rem 1rem;
+}
+
+.modal-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-top: 1.5rem;
+}
+
+.modal-actions button,
+.modal-actions a {
+	display: inline-flex;
+	align-items: center;
+	border: 1px solid var(--border);
+	padding: 0.5rem 0.75rem;
+	background-color: var(--surface);
+	color: var(--text);
+	cursor: pointer;
+}
+
+.modal-actions button:hover,
+.modal-actions a:hover {
+	border-color: var(--focus);
+	color: var(--focus);
 }

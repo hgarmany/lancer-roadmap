@@ -23,7 +23,10 @@ import {
 import {
 	fileInput,
 	lcpManager,
-	lcpStatus,
+	lcpStatus
+} from '../ui/renderer.js';
+
+import {
 	renderPackageList
 } from '../ui/renderModules.js';
 

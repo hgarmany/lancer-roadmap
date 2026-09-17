@@ -25,6 +25,10 @@ import {
 } from '../constants.js';
 
 import {
+	lcpStatus
+} from './renderer.js';
+
+import {
 	SELECT_TEMPLATE,
 	renderSelector,
 	renderWeaponSelector,
@@ -77,30 +81,9 @@ const SIZE_ICON_SVGS = Object.freeze({
 	3: sizeThreeSvg
 });
 
-export const headerButtons = document.getElementById('header-buttons');
-
-export const roadmapName = document.getElementById('roadmap-name');
-export const maxLevelInput = document.getElementById('roadmap-max-level');
-export const themeToggle = document.getElementById('theme-toggle');
-export const exoticsToggle = document.getElementById('exotics-toggle');
-export const loadBtn = document.getElementById('load-btn');
-export const saveBtn = document.getElementById('save-btn');
-export const roadmapFileInput = document.getElementById('roadmap-file');
-
-export const lcpManager = document.getElementById('lcp-manager');
-export const fileInput = document.getElementById('lcp-file');
 const lcpPackages = document.getElementById('lcp-packages');
 const lcpCount = document.getElementById('lcp-count');
-export const lcpStatus = document.getElementById('lcp-status');
-
-export const levelRail = document.querySelector(".level-rail");
-export const roadmapShell = document.getElementById("roadmap-shell");
-export const roadmapContainer = document.querySelector(".roadmap-container");
-export const tableBody = document.getElementById("roadmap-body");
 const tableHead = document.querySelector("#roadmap-table thead");
-
-export const modalLayer = document.getElementById('modal-layer');
-export const modalDialog = document.getElementById('modal-dialog');
 
 export function renderPackageList(packages, isImport, eventLCP) {
 	lcpPackages.replaceChildren();

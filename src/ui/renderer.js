@@ -18,27 +18,14 @@ import {
 } from './roadmapTable.js';
 
 import {
-	headerButtons,
-	roadmapName,
-	maxLevelInput,
-	themeToggle,
-	exoticsToggle,
-	loadBtn,
-	saveBtn,
-	roadmapFileInput,
-	levelRail,
-	roadmapShell,
-	roadmapContainer,
-	tableBody,
-	modalLayer,
-	modalDialog
-} from './renderModules.js';
-
-import {
 	refreshSelectors,
 	refreshWeaponSelectors,
 	refreshElectiveSystemList
 } from './refreshRenderModules.js';
+
+import {
+	openModal
+} from './modal/modal.js';
 
 import {
 	SELECT_TEMPLATE
@@ -47,6 +34,25 @@ import {
 import {
 	THEME
 } from '../constants.js';
+
+const headerButtons = document.getElementById('header-buttons');
+
+const roadmapName = document.getElementById('roadmap-name');
+const maxLevelInput = document.getElementById('roadmap-max-level');
+const themeToggle = document.getElementById('theme-toggle');
+const exoticsToggle = document.getElementById('exotics-toggle');
+const loadBtn = document.getElementById('load-btn');
+const saveBtn = document.getElementById('save-btn');
+const roadmapFileInput = document.getElementById('roadmap-file');
+
+export const lcpManager = document.getElementById('lcp-manager');
+export const fileInput = document.getElementById('lcp-file');
+export const lcpStatus = document.getElementById('lcp-status');
+
+const levelRail = document.querySelector(".level-rail");
+const roadmapShell = document.getElementById("roadmap-shell");
+const roadmapContainer = document.querySelector(".roadmap-container");
+const tableBody = document.getElementById("roadmap-body");
 
 function positionLevelLabels() {
 	const railTop = levelRail.getBoundingClientRect().top;
@@ -105,12 +111,7 @@ export function configureHeader() {
 		const button = event.target.closest?.('button[data-id]');
 		if (!button || !event.currentTarget.contains(button))
 			return;
-
-		const buttonId = button.dataset.id;
-
-		modalDialog.textContent = buttonId;
-
-		modalLayer.hidden = false;
+		void openModal(button);
 	});
 }
 
@@ -197,12 +198,6 @@ export function configureToolMenu() {
 		}
 
 		positionLevelLabels();
-	});
-}
-
-export function configureModal() {
-	modalLayer.addEventListener('click', event => {
-		modalLayer.hidden = true;
 	});
 }
 
