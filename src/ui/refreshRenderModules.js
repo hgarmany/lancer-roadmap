@@ -105,7 +105,6 @@ export function refreshSelector(
 		if (template.redrawLabels) {
 			const label = option.querySelector('span');
 			label.textContent = template.getLabel({ level, id, selectedId });
-			option.title = template.getDescription({ level, id, selectedId });
 		}
 
 		// drop-down lists are adjusted by hiding invalid options

@@ -96,6 +96,10 @@ const selectorMenus = new WeakMap();
 let activeSelector = null;
 const selectorOverlay = document.getElementById('selector-overlay');
 
+const infoBubble = document.createElement('div');
+infoBubble.id = 'selector-info-bubble';
+infoBubble.hidden = true;
+
 const MANUFACTURER_LOGOS = new Map([
 	['GMS', gmsLogoUrl],
 	['HA', haLogoUrl],
@@ -166,7 +170,8 @@ export const SELECT_TEMPLATE = Object.freeze({
 			if (!rankData)
 				return null;
 
-			const description = rankData.name + ': ' + rankData.description;
+			const description =
+				`<h3>${rankData.name}</h3>${rankData.description}`;
 
 			return description?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
 		},
@@ -217,7 +222,7 @@ export const SELECT_TEMPLATE = Object.freeze({
 			return id ? (srcData.coreBonuses.get(id)?.name ?? '') :
 				'Select a core bonus';
 		},
-		getDescription: ({ id }) => srcData.coreBonuses.get(id)?.description,
+		getDescription: ({ id }) => srcData.coreBonuses.get(id)?.effect,
 		getEligibility: ({ level, id, selectedId }) =>
 			isCoreBonusEligible(level, id, selectedId),
 		changeEvent: (selector, level) => coreBonusUpdate(selector, level)
@@ -306,7 +311,7 @@ export const SELECT_TEMPLATE = Object.freeze({
 		},
 		getDescription: ({ id }) => {
 			const item = srcData.systems.get(id);
-			return (item?.description ?? item?.effect)
+			return item?.effect
 				?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n')
 		},
 		getEligibility: ({ level, id, selectedId }) =>
@@ -398,6 +403,7 @@ export function setSelectorOpen(selector, doOpen) {
 	selector.classList.toggle('open', doOpen);
 	const menu = selectorMenus.get(selector);
 	if (!doOpen) {
+		infoBubble.hidden = true;
 		if (activeSelector === selector)
 			activeSelector = null;
 		if (menu && menu.parentElement !== selector)
@@ -430,7 +436,6 @@ export function renderOption(template, source, context) {
 	name.textContent = template.getLabel?.(context) ?? '';
 	option.append(name);
 
-	option.title = template.getDescription?.(context) ?? '';
 	if (!template.getEligibility?.(context) ?? false)
 		setOptionHidden(option, true);
 
@@ -520,8 +525,40 @@ export function renderSelector(
 
 	// loss of focus simply closes the menu
 	control.addEventListener('blur', event => {
-		if (!selector.contains(event.relatedTarget))
+		if (!selector.contains(event.relatedTarget) &&
+			!menu.contains(event.relatedTarget))
 			setSelectorOpen(selector, false);
+	});
+
+	// option descriptions
+	menu.addEventListener('mouseover', event => {
+		const option = event.target.closest?.('.selector-option');
+		if (option && menu.contains(option))
+			showOptionInfo(option, template, {
+				...extraContext, level, id: option.value,
+				selectedId: selector.value
+			});
+	});
+	menu.addEventListener('mouseout', event => {
+		if (!menu.contains(event.relatedTarget))
+			infoBubble.hidden = true;
+	});
+	menu.addEventListener(
+		'scroll',
+		() => { infoBubble.hidden = true; },
+		{ passive: true }
+	);
+
+	// active selection description
+	control.addEventListener('mouseover', event => {
+		if (selector.value)
+			showOptionInfo(selector, template, {
+				...extraContext, level, id: selector.value,
+				selectedId: selector.value
+			});
+	});
+	control.addEventListener('mouseout', event => {
+		infoBubble.hidden = true;
 	});
 
 	controlRow.append(control);
@@ -589,7 +626,42 @@ export function renderWeaponSelector(
 	return selector;
 }
 
-window.addEventListener('resize', () =>
-	positionSelectorMenu(activeSelector));
-window.addEventListener('scroll', () =>
-	positionSelectorMenu(activeSelector));
+window.addEventListener('resize', () => {
+	positionSelectorMenu(activeSelector);
+	infoBubble.hidden = true;
+});
+window.addEventListener('scroll', () => {
+	positionSelectorMenu(activeSelector);
+	infoBubble.hidden = true;
+});
+
+function positionOptionInfo(option) {
+	const gap = 8;
+	const margin = 8;
+	const optionRect = option.getBoundingClientRect();
+	const bubbleRect = infoBubble.getBoundingClientRect();
+	const right = optionRect.right + gap;
+	const left = optionRect.left - bubbleRect.width - gap;
+	const x = right + bubbleRect.width <= window.innerWidth - margin ?
+		right : Math.max(margin, left);
+	const y = Math.max(margin, Math.min(
+		optionRect.top,
+		window.innerHeight - bubbleRect.height - margin
+	));
+
+	infoBubble.style.left = `${x}px`;
+	infoBubble.style.top = `${y}px`;
+}
+
+function showOptionInfo(option, template, context) {
+	const description = template.getDescription?.(context);
+	if (!description || option.style.display === 'none') {
+		infoBubble.hidden = true;
+		return;
+	}
+
+	infoBubble.innerHTML = description;
+	selectorOverlay.append(infoBubble);
+	infoBubble.hidden = false;
+	positionOptionInfo(option);
+}

@@ -312,7 +312,6 @@ function renderIntegratedWeaponLabel(id) {
 	const label = document.createElement('div');
 	label.className = 'custom-select-mimic';
 	label.textContent = SELECT_TEMPLATE.WEAPON.getLabel({ id });
-	label.title = SELECT_TEMPLATE.WEAPON.getDescription({ id });
 	return label;
 }
 
