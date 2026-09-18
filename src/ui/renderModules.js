@@ -408,8 +408,6 @@ export function renderIntegratedSystems(level) {
 
 			const systemLabel = document.createElement('span');
 			systemLabel.textContent = system.name ?? '';
-			systemLabel.title =	SELECT_TEMPLATE.SYSTEM
-				.getDescription({ id: systemId }) ?? '';
 
 			listing.append(systemLabel, renderSystemTags(level, systemId));
 			integratedSystems.append(listing);

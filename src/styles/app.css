@@ -76,6 +76,14 @@ body {
 	background-size: 24px 24px;
 }
 
+h1, h2, h3, h4, h5, h6 {
+	margin-bottom: 0.25rem;
+	font-family: var(--header-font);
+	font-weight: 900;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
 .inline-header {
 	font-family: var(--header-font);
 	font-weight: 900;
@@ -784,6 +792,15 @@ select {
 	z-index: 10;
 }
 
+.modal-text-box > :first-child,
+#selector-info-bubble > :first-child {
+	margin-top: 0;
+}
+
+#selector-info-bubble > :last-child {
+	margin-bottom: 0;
+}
+
 .custom-select.open .selector-arrow {
 	transform: rotate(180deg);
 }
@@ -1057,6 +1074,10 @@ select {
 .tags {
 	display: flex;
 	gap: 0.25rem;
+}
+
+.custom-select .mount-tags,
+.custom-select .tags {
 	margin-top: 0.25rem;
 	margin-left: 0.5rem;
 }
@@ -1105,6 +1126,13 @@ select {
 	border-color: var(--ai);
 	background-color: color-mix(in srgb, var(--ai) 15%, var(--surface));
 	color: var(--ai);
+}
+
+.action {
+	border-color: color-mix(in srgb, var(--accent) 25%, var(--border));
+	background-color: color-mix(in srgb, var(--accent) 25%, transparent);
+	color: color-mix(in srgb, var(--accent) 25%, var(--border));
+	margin-left: 0.5rem;
 }
 
 /* mounts cell styles */
@@ -1297,14 +1325,6 @@ select {
 
 .modal-text-box .menu-btn:not(:hover) {
 	background-color: var(--primary);
-}
-
-h1, h2, h3, h4, h5, h6 {
-	margin-top: 0;
-	font-family: var(--header-font);
-	font-weight: 900;
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
 }
 
 .tutorial-selector-examples {

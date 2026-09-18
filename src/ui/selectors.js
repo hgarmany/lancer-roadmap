@@ -32,6 +32,7 @@ import {
 
 import {
 	applyAttachmentManager,
+	renderSystemTags,
 	renderWeaponTags
 } from './tags.js';
 
@@ -136,7 +137,10 @@ export const SELECT_TEMPLATE = Object.freeze({
 			return srcData.skillTriggers.get(id)?.name +
 				(showRank ? ` ${ROMAN_NUMERALS[rank]}` : '');
 		},
-		getDescription: ({ id }) => srcData.skillTriggers.get(id)?.description,
+		applyDescription: (bubble, { id }) => {
+			bubble.innerHTML = srcData.skillTriggers.get(id)?.description;
+			bubble.hidden = false;
+		},
 		getEligibility: ({ level, id, selectedId }) =>
 			isSkillTriggerEligible(level, id, selectedId),
 		changeEvent: (selector, level) => skillTriggerUpdate(selector, level)
@@ -164,17 +168,7 @@ export const SELECT_TEMPLATE = Object.freeze({
 			return srcData.talents.get(id)?.name +
 				(showRank ? ` ${ROMAN_NUMERALS[rank]}` : '');
 		},
-		getDescription: ({ level, id, selectedId }) => {
-			const rank = getTalentRank(level, id, selectedId);
-			const rankData = srcData.talents.get(id)?.ranks[rank];
-			if (!rankData)
-				return null;
-
-			const description =
-				`<h3>${rankData.name}</h3>${rankData.description}`;
-
-			return description?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
-		},
+		applyDescription: renderTalentDescription,
 		getEligibility: ({ level, id, selectedId }) =>
 			isTalentEligible(level, id, selectedId),
 		changeEvent: (selector, level) => talentUpdate(selector, level)
@@ -222,7 +216,10 @@ export const SELECT_TEMPLATE = Object.freeze({
 			return id ? (srcData.coreBonuses.get(id)?.name ?? '') :
 				'Select a core bonus';
 		},
-		getDescription: ({ id }) => srcData.coreBonuses.get(id)?.effect,
+		applyDescription: (bubble, { id }) => {
+			bubble.textContent = srcData.coreBonuses.get(id)?.effect;
+			bubble.hidden = false;
+		},
 		getEligibility: ({ level, id, selectedId }) =>
 			isCoreBonusEligible(level, id, selectedId),
 		changeEvent: (selector, level) => coreBonusUpdate(selector, level)
@@ -241,9 +238,11 @@ export const SELECT_TEMPLATE = Object.freeze({
 		getLabel: ({ id }) => {
 			return id ? srcData.frames.get(id)?.name : null;
 		}				,
-		getDescription: ({ id }) =>
-			srcData.frames.get(id)?.description
-				?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n'),
+		applyDescription: (bubble, { id }) => {
+			bubble.innerHTML = srcData.frames.get(id)?.description
+				?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
+			bubble.hidden = false;
+		},
 		getEligibility: ({ level, id }) =>
 			isFrameEligible(level, id),
 		changeEvent: (selector, level) => frameUpdate(selector, level)
@@ -259,10 +258,15 @@ export const SELECT_TEMPLATE = Object.freeze({
 			return id ? (srcData.weapons.get(id)?.name ?? '') :
 				slot?.label;
 		},
-		getDescription: ({ id }) => {
+		applyDescription: (bubble, { id }) => {
+			bubble.innerHTML = '';
+
+			// add weapon tags
+
 			const item = srcData.weapons.get(id);
-			return (item?.description ?? item?.effect)
-				?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n')
+			bubble.innerHTML = (item?.description ?? item?.effect)
+				?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
+			bubble.hidden = false;
 		},
 		getEligibility: ({ level, id, selectedId, slot }) =>
 			isWeaponEligible(level, id, selectedId, slot),
@@ -309,16 +313,86 @@ export const SELECT_TEMPLATE = Object.freeze({
 			return id ? (srcData.systems.get(id)?.name ?? '') :
 				'Select a system';
 		},
-		getDescription: ({ id }) => {
-			const item = srcData.systems.get(id);
-			return item?.effect
-				?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n')
-		},
+		applyDescription: renderSystemDescription,
 		getEligibility: ({ level, id, selectedId }) =>
 			isSystemEligible(level, id, selectedId),
 		changeEvent: (selector, level) => systemUpdate(selector, level)
 	}
 });
+
+function renderTalentDescription(bubble, { level, id, selectedId }) {
+	bubble.innerHTML = '';
+
+	const rank = getTalentRank(level, id, selectedId);
+	const rankData = srcData.talents.get(id)?.ranks[rank];
+	if (!rankData)
+		return null;
+
+	const rankName = document.createElement('h3');
+	rankName.textContent = rankData.name;
+	const rankDescription = document.createElement('p');
+	rankDescription.innerHTML =
+		rankData.description?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
+
+	bubble.append(rankName, rankDescription);
+
+	for (const action of rankData?.actions ?? []) {
+		const actionName = document.createElement('h4');
+		actionName.textContent = action.name ?? rankData.name;
+		const actionType = document.createElement('span');
+		actionType.className = `tag action ${action.activation}`;
+		actionType.textContent = action.activation;
+		actionName.append(actionType);
+
+		const actionDescription = document.createElement('p');
+		actionDescription.innerHTML = action.detail;
+
+		bubble.append(actionName, actionDescription);
+	}
+
+	bubble.hidden = false;
+}
+
+function renderSystemDescription(bubble, { level, id }) {
+	bubble.innerHTML = '';
+
+	const item = srcData.systems.get(id);
+
+	const tags = renderSystemTags(level, id);
+	if (tags.childElementCount)
+		bubble.append(tags);
+
+	if (item?.effect) {
+		const systemDescription = document.createElement('p');
+		systemDescription.innerHTML = item.effect;
+		bubble.append(systemDescription);
+	}
+
+	for (const action of item?.actions ?? []) {
+		const actionName = document.createElement('h4');
+		actionName.textContent = action.name ?? item.name;
+		const actionType = document.createElement('span');
+		actionType.className = `tag action ${action.activation}`;
+		actionType.textContent = action.activation;
+		actionName.append(actionType);
+
+		const actionDescription = document.createElement('p');
+		actionDescription.innerHTML = action.detail;
+
+		bubble.append(actionName, actionDescription);
+	}
+
+	for (const deployable of item?.deployables ?? []) {
+		const deployableName = document.createElement('h4');
+		deployableName.textContent = deployable.name ?? item.name;
+		const deployableDescription = document.createElement('p');
+		deployableDescription.innerHTML = deployable.detail;
+
+		bubble.append(deployableName, deployableDescription);
+	}
+
+	bubble.hidden = false;
+}
 
 export function getSelectorValue(selector) {
 	return selector.value === '' ? null : selector.value;
@@ -338,8 +412,6 @@ export function setSelectorValue(selector, id, template, extraContext = {}) {
 
 	if (label && template.redrawLabels)
 		label.textContent = template.getLabel?.(context) ?? '';
-	if (control)
-		control.title = template.getDescription?.(context) ?? '';
 }
 
 export function setSelectorClass(selector, className, toggle = true) {
@@ -473,7 +545,6 @@ export function renderSelector(
 	control.className = 'selector-control';
 	control.classList.toggle('occupied', selectedId);
 	control.type = 'button';
-	control.title = template.getDescription?.(context) ?? '';
 
 	const value = document.createElement('span');
 	value.className = 'selector-value';
@@ -654,14 +725,7 @@ function positionOptionInfo(option) {
 }
 
 function showOptionInfo(option, template, context) {
-	const description = template.getDescription?.(context);
-	if (!description || option.style.display === 'none') {
-		infoBubble.hidden = true;
-		return;
-	}
-
-	infoBubble.innerHTML = description;
+	template.applyDescription?.(infoBubble, context);
 	selectorOverlay.append(infoBubble);
-	infoBubble.hidden = false;
 	positionOptionInfo(option);
 }
