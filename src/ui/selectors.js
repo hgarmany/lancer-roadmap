@@ -160,9 +160,16 @@ export const SELECT_TEMPLATE = Object.freeze({
 			return srcData.talents.get(id)?.name +
 				(showRank ? ` ${ROMAN_NUMERALS[rank]}` : '');
 		},
-		getDescription: ({ id }) =>
-			srcData.talents.get(id)?.description
-				?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n'),
+		getDescription: ({ level, id, selectedId }) => {
+			const rank = getTalentRank(level, id, selectedId);
+			const rankData = srcData.talents.get(id)?.ranks[rank];
+			if (!rankData)
+				return null;
+
+			const description = rankData.name + ': ' + rankData.description;
+
+			return description?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
+		},
 		getEligibility: ({ level, id, selectedId }) =>
 			isTalentEligible(level, id, selectedId),
 		changeEvent: (selector, level) => talentUpdate(selector, level)
