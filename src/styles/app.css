@@ -84,6 +84,10 @@ h1, h2, h3, h4, h5, h6 {
 	text-transform: uppercase;
 }
 
+ul, ol {
+	padding-left: 1rem;
+}
+
 .inline-header {
 	font-family: var(--header-font);
 	font-weight: 900;
@@ -797,6 +801,11 @@ select {
 	margin-top: 0;
 }
 
+#selector-info-bubble h4 {
+	display: flex;
+	margin-bottom: -0.5rem;
+}
+
 #selector-info-bubble > :last-child {
 	margin-bottom: 0;
 }
@@ -1171,8 +1180,7 @@ select {
 
 .mount-tags,
 .custom-select-mimic .tags {
-	margin-bottom: 0.5rem;
-	margin-left: 0;
+	margin: 0.5rem 0;
 }
 
 .mod-tag,

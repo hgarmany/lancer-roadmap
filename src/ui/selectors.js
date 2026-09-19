@@ -258,16 +258,7 @@ export const SELECT_TEMPLATE = Object.freeze({
 			return id ? (srcData.weapons.get(id)?.name ?? '') :
 				slot?.label;
 		},
-		applyDescription: (bubble, { id }) => {
-			bubble.innerHTML = '';
-
-			// add weapon tags
-
-			const item = srcData.weapons.get(id);
-			bubble.innerHTML = (item?.description ?? item?.effect)
-				?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
-			bubble.hidden = false;
-		},
+		applyDescription: renderWeaponDescription,
 		getEligibility: ({ level, id, selectedId, slot }) =>
 			isWeaponEligible(level, id, selectedId, slot),
 		changeEvent: (selector, level) => weaponUpdate(selector, level)
@@ -359,12 +350,15 @@ function renderSystemDescription(bubble, { level, id }) {
 	const item = srcData.systems.get(id);
 
 	const tags = renderSystemTags(level, id);
-	if (tags.childElementCount)
+	if (tags.childElementCount) {
+		tags.style.justifyContent = 'right';
 		bubble.append(tags);
+	}
 
 	if (item?.effect) {
 		const systemDescription = document.createElement('p');
-		systemDescription.innerHTML = item.effect;
+		systemDescription.innerHTML = item.effect
+			?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
 		bubble.append(systemDescription);
 	}
 
@@ -377,7 +371,8 @@ function renderSystemDescription(bubble, { level, id }) {
 		actionName.append(actionType);
 
 		const actionDescription = document.createElement('p');
-		actionDescription.innerHTML = action.detail;
+		actionDescription.innerHTML = action.detail
+			?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
 
 		bubble.append(actionName, actionDescription);
 	}
@@ -390,6 +385,25 @@ function renderSystemDescription(bubble, { level, id }) {
 
 		bubble.append(deployableName, deployableDescription);
 	}
+
+	bubble.hidden = false;
+}
+
+function renderWeaponDescription(bubble, { level, id }) {
+	bubble.innerHTML = '';
+
+	// add weapon tags
+	const tags = renderWeaponTags(level, { id }, -1, -1);
+	if (tags.childElementCount) {
+		tags.style.justifyContent = 'right';
+		bubble.append(tags);
+	}
+
+	const item = srcData.weapons.get(id);
+	const description = document.createElement('p');
+	description.innerHTML = (item?.description ?? item?.effect)
+		?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
+	bubble.append(description);
 
 	bubble.hidden = false;
 }
