@@ -36,6 +36,9 @@ import {
 } from '../constants.js';
 
 const headerButtons = document.getElementById('header-buttons');
+const appTitle = document.getElementById('title');
+const header = headerButtons.closest('header');
+const licenseMarks = header.querySelectorAll('.license-mark');
 
 const roadmapName = document.getElementById('roadmap-name');
 const maxLevelInput = document.getElementById('roadmap-max-level');
@@ -106,6 +109,25 @@ function refreshRoadmapMenu() {
 	document.documentElement.dataset.exotics = roadmap.allowExotics;
 }
 
+/**
+ * Set 
+ */
+function updateTitleVisibility() {
+	const titleRect = appTitle.getBoundingClientRect();
+	const buttonsRight = Math.max(
+		headerButtons.getBoundingClientRect().right,
+		...Array.from(headerButtons.children, button =>
+			button.getBoundingClientRect().right)
+	);
+	const markLeft = Array.from(licenseMarks).find(mark =>
+		mark.getClientRects().length)
+		?.getBoundingClientRect().left ?? Infinity;
+
+	appTitle.style.visibility =
+		titleRect.left >= buttonsRight &&
+		titleRect.right <= markLeft ? '' : 'hidden';
+}
+
 export function configureHeader() {
 	headerButtons?.addEventListener('click', event => {
 		const button = event.target.closest?.('button[data-id]');
@@ -113,6 +135,11 @@ export function configureHeader() {
 			return;
 		void openModal(button);
 	});
+
+	const headerResizeObserver = new ResizeObserver(updateTitleVisibility);
+	for (const element of [header, headerButtons, appTitle, ...licenseMarks])
+		headerResizeObserver.observe(element);
+	updateTitleVisibility();
 }
 
 /**

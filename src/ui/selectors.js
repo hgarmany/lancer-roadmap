@@ -96,10 +96,26 @@ import {
 const selectorMenus = new WeakMap();
 let activeSelector = null;
 const selectorOverlay = document.getElementById('selector-overlay');
+const infoBubble = document.getElementById('selector-info-bubble');
+let infoBubbleHideTimer = null;
 
-const infoBubble = document.createElement('div');
-infoBubble.id = 'selector-info-bubble';
-infoBubble.hidden = true;
+function cancelInfoBubbleHide() {
+	clearTimeout(infoBubbleHideTimer);
+	infoBubbleHideTimer = null;
+}
+
+function hideInfoBubble() {
+	cancelInfoBubbleHide();
+	infoBubble.hidden = true;
+}
+
+function scheduleInfoBubbleHide() {
+	cancelInfoBubbleHide();
+	infoBubbleHideTimer = setTimeout(hideInfoBubble, 100);
+}
+
+infoBubble.addEventListener('mouseenter', cancelInfoBubbleHide);
+infoBubble.addEventListener('mouseleave', hideInfoBubble);
 
 const MANUFACTURER_LOGOS = new Map([
 	['GMS', gmsLogoUrl],
@@ -317,7 +333,10 @@ export const SELECT_TEMPLATE = Object.freeze({
  */
 function renderSubItemDescription(item, ancestor = null) {
 	// skip entirely if this item duplicates its ancestor
-	if (ancestor?.description && item.description === ancestor.description)
+	const itemDescription = item.detail ?? item.description ?? null;
+	const ancestorDescription =
+		ancestor?.detail ?? ancestor?.description ?? null;
+	if (ancestorDescription && itemDescription === ancestorDescription)
 		return null;
 
 	const container = document.createElement('div');
@@ -335,7 +354,7 @@ function renderSubItemDescription(item, ancestor = null) {
 	}
 
 	const description = document.createElement('p');
-	description.innerHTML = (item.detail ?? item.description)
+	description.innerHTML = itemDescription
 		?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
 
 	container.append(name, description);
@@ -541,7 +560,7 @@ export function setSelectorOpen(selector, doOpen) {
 	selector.classList.toggle('open', doOpen);
 	const menu = selectorMenus.get(selector);
 	if (!doOpen) {
-		infoBubble.hidden = true;
+		hideInfoBubble();
 		if (activeSelector === selector)
 			activeSelector = null;
 		if (menu && menu.parentElement !== selector)
@@ -678,11 +697,11 @@ export function renderSelector(
 	});
 	menu.addEventListener('mouseout', event => {
 		if (!menu.contains(event.relatedTarget))
-			infoBubble.hidden = true;
+			scheduleInfoBubbleHide();
 	});
 	menu.addEventListener(
 		'scroll',
-		() => { infoBubble.hidden = true; },
+		hideInfoBubble,
 		{ passive: true }
 	);
 
@@ -695,7 +714,8 @@ export function renderSelector(
 			});
 	});
 	control.addEventListener('mouseout', event => {
-		infoBubble.hidden = true;
+		if (!control.contains(event.relatedTarget))
+			scheduleInfoBubbleHide();
 	});
 
 	controlRow.append(control);
@@ -765,34 +785,75 @@ export function renderWeaponSelector(
 
 window.addEventListener('resize', () => {
 	positionSelectorMenu(activeSelector);
-	infoBubble.hidden = true;
+	hideInfoBubble();
 });
 window.addEventListener('scroll', () => {
 	positionSelectorMenu(activeSelector);
-	infoBubble.hidden = true;
+	hideInfoBubble();
 });
 
 function positionOptionInfo(option) {
 	const gap = 8;
 	const margin = 8;
 	const optionRect = option.getBoundingClientRect();
+	const avoidRect = option.closest('.selector-menu')?.getBoundingClientRect()
+		?? optionRect;
 	const bubbleRect = infoBubble.getBoundingClientRect();
-	const right = optionRect.right + gap;
-	const left = optionRect.left - bubbleRect.width - gap;
-	const x = right + bubbleRect.width <= window.innerWidth - margin ?
-		right : Math.max(margin, left);
-	const y = Math.max(margin, Math.min(
-		optionRect.top,
-		window.innerHeight - bubbleRect.height - margin
-	));
+	const right = avoidRect.right + gap;
+	const left = avoidRect.left - bubbleRect.width - gap;
+	let x;
+	let y;
+
+	const fitsToLeft = left >= margin;
+	const fitsToRight = right + bubbleRect.width <= window.innerWidth - margin;
+
+	if (fitsToLeft || fitsToRight) {
+		x = fitsToLeft ? left : right;
+		y = Math.max(margin, Math.min(optionRect.top,
+			window.innerHeight - bubbleRect.height - margin));
+	}
+	else {
+		// neither side fits: place the bubble outside the menu vertically
+		x = Math.max(margin, Math.min(optionRect.left,
+			window.innerWidth - bubbleRect.width - margin));
+
+		const below = window.innerHeight - margin - avoidRect.bottom - gap;
+		const above = avoidRect.top - gap - margin;
+
+		if (below >= bubbleRect.height)
+			y = avoidRect.bottom + gap;
+		else if (above >= bubbleRect.height)
+			y = avoidRect.top - gap - bubbleRect.height;
+
+		else {
+			// still no suitable space: investigate resizing the bubble
+			// below normal minimum constraints
+			const placeBelow = below >= above;
+			const available = Math.max(below, above);
+			if (available < 50) {
+				// no space suitable for any bubble: just hide it
+				infoBubble.hidden = true;
+				return;
+			}
+
+			infoBubble.style.maxHeight = `${available}px`;
+			y = placeBelow ? avoidRect.bottom + gap :
+				avoidRect.top - gap - available;
+		}
+	}
 
 	infoBubble.style.left = `${x}px`;
 	infoBubble.style.top = `${y}px`;
 }
 
 function showOptionInfo(option, template, context) {
-	infoBubble.replaceChildren(...template.applyDescription?.(context));
+	cancelInfoBubbleHide();
+	const info = template.applyDescription?.(context);
+	if (!info)
+		return;
+
+	infoBubble.replaceChildren(...info);
+	infoBubble.style.maxHeight = '';
 	infoBubble.hidden = false;
-	selectorOverlay.append(infoBubble);
 	positionOptionInfo(option);
 }
