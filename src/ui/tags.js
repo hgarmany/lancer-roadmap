@@ -250,6 +250,16 @@ function tryUniqueTag(tags, item, level) {
 	tags.append(tag);
 }
 
+function trySPTag(tags, item) {
+	if (!item?.sp)
+		return;
+
+	const tag = document.createElement('div')
+	tag.className = 'tag';
+	tag.textContent = `${item.sp} SP`;
+	tags.append(tag);
+}
+
 export function renderMountTags(level, attachments, mount) {
 	const tags = document.createElement('div');
 	tags.className = 'mount-tags';
@@ -303,7 +313,7 @@ export function renderMountTags(level, attachments, mount) {
 	return tags;
 }
 
-export function renderWeaponTags(level, weapon, mountIdx, slotIdx) {
+export function renderWeaponTags(level, weapon, mountIdx, slotIdx, doSP) {
 	const srcWeapon = srcData.weapons.get(weapon?.id);
 
 	const tags = document.createElement('div');
@@ -338,12 +348,14 @@ export function renderWeaponTags(level, weapon, mountIdx, slotIdx) {
 	tryExoticTag(tags, srcWeapon);
 	tryLimitedTag(tags, srcWeapon, level);
 	tryUniqueTag(tags, srcWeapon);
+	if (doSP)
+		trySPTag(tags, srcWeapon);
 
 	tags.style.display = tags.children.length ? 'flex' : 'none';
 	return tags;
 }
 
-export function renderSystemTags(level, systemId) {
+export function renderSystemTags(level, systemId, doSP) {
 	const system = srcData.systems.get(systemId);
 
 	const tags = document.createElement('div');
@@ -353,6 +365,8 @@ export function renderSystemTags(level, systemId) {
 	tryExoticTag(tags, system);
 	tryLimitedTag(tags, system, level);
 	tryUniqueTag(tags, system);
+	if (doSP)
+		trySPTag(tags, system);
 
 	tags.style.display = tags.children.length ? 'flex' : 'none';
 	return tags;

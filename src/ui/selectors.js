@@ -347,7 +347,7 @@ function renderSubItemDescription(item, ancestor = null) {
 	// actions and deployables get tags alongside their name
 	if (item.activation || item.type) {
 		const type = document.createElement('span');
-		type.className = 'tag';
+		type.className = 'tags tag';
 		type.classList.toggle('action', item.activation !== undefined);
 		type.textContent = item.activation ?? item.type;
 		name.append(type);
@@ -435,7 +435,7 @@ function renderSystemDescription({ level, id }) {
 	if (!item)
 		return null;
 
-	const tags = renderSystemTags(level, id);
+	const tags = renderSystemTags(level, id, true);
 	if (tags.childElementCount) {
 		tags.style.justifyContent = 'right';
 		content.push(tags);
@@ -463,19 +463,79 @@ function renderSystemDescription({ level, id }) {
 function renderWeaponDescription({ level, id }) {
 	const content = [];
 
+	const item = srcData.weapons.get(id);
+
+	const header = document.createElement('h4');
+	header.textContent = `${item.mount} ${item.type}`;
 	// add weapon tags
-	const tags = renderWeaponTags(level, { id }, -1, -1);
+	const tags = renderWeaponTags(level, { id }, -1, -1, true);
 	if (tags.childElementCount) {
 		tags.style.justifyContent = 'right';
-		content.push(tags);
+		header.append(tags);
+	}
+	content.push(header);
+
+	if (item.effect) {
+		const description = document.createElement('p');
+		description.innerHTML = item.effect
+			?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
+		content.push(description);
 	}
 
-	const item = srcData.weapons.get(id);
-	const description = document.createElement('p');
-	description.innerHTML = (item?.description ?? item?.effect)
-		?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
-	content.push(description);
+	if (item.range) {
+		const rangeDiv = document.createElement('p');
+		rangeDiv.className = 'range';
+		for (const rangeData of item.range) {
+			const range = document.createElement('span');
+			range.innerHTML = `<b>${rangeData.type}:</b> ${rangeData.val}`;
+			rangeDiv.append(range);
+		}
+		content.push(rangeDiv);
+	}
 
+	if (item.damage) {
+		const damageDiv = document.createElement('p');
+		damageDiv.className = 'damage';
+		for (const damageData of item.damage) {
+			const damage = document.createElement('span');
+			damage.innerHTML = `${damageData.val} ${damageData.type}`;
+			damageDiv.append(damage);
+		}
+		content.push(damageDiv);
+	}
+
+	if (item.on_attack) {
+		const attackDescription = document.createElement('p');
+		attackDescription.innerHTML += '<b>On Attack:</b> ' +
+			(typeof item.on_attack === 'string' ?
+				item.on_attack : item.on_attack.detail);
+		content.push(attackDescription);
+	}
+
+	if (item.on_hit) {
+		const hitDescription = document.createElement('p');
+		hitDescription.innerHTML += '<b>On Hit:</b> ' +
+			(typeof item.on_hit === 'string' ?
+				item.on_hit : item.on_hit.detail);
+		content.push(hitDescription);
+	}
+
+	if (item.on_crit) {
+		const critDescription = document.createElement('p');
+		critDescription.innerHTML += '<b>On Crit:</b> ' +
+			(typeof item.on_crit === 'string' ?
+				item.on_crit : item.on_crit.detail);
+		content.push(critDescription);
+	}
+
+	if (item.on_miss) {
+		const missDescription = document.createElement('p');
+		missDescription.innerHTML += '<b>On Miss:</b> ' +
+			(typeof item.on_miss === 'string' ?
+				item.on_miss : item.on_miss.detail);
+		content.push(missDescription);
+	}
+	
 	return content;
 }
 
@@ -776,7 +836,8 @@ export function renderWeaponSelector(
 	selector.dataset.mountIdx = mountIdx;
 	selector.dataset.slotIdx = slotIdx;
 
-	applyAttachmentManager(level, selector);
+	if (!srcData.weapons.get(selectedId)?.no_mods)
+		applyAttachmentManager(level, selector);
 	selector.append(renderWeaponTags(
 		level, weapon, mountIdx, slotIdx));
 

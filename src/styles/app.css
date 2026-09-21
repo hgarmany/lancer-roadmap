@@ -807,6 +807,12 @@ select {
 	z-index: 10;
 }
 
+.range,
+.damage {
+	display: flex;
+	gap: 1rem;
+}
+
 .modal-text-box > :first-child,
 #selector-info-bubble > :first-child {
 	margin-top: 0;
@@ -817,7 +823,7 @@ select {
 	margin-bottom: -0.5rem;
 }
 
-#selector-info-bubble h4 .tag {
+#selector-info-bubble h4 .tags {
 	margin-left: 0.5rem;
 }
 
