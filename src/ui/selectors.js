@@ -137,10 +137,8 @@ export const SELECT_TEMPLATE = Object.freeze({
 			return srcData.skillTriggers.get(id)?.name +
 				(showRank ? ` ${ROMAN_NUMERALS[rank]}` : '');
 		},
-		applyDescription: (bubble, { id }) => {
-			bubble.innerHTML = srcData.skillTriggers.get(id)?.description;
-			bubble.hidden = false;
-		},
+		applyDescription: ({ id }) =>
+			srcData.skillTriggers.get(id)?.description,
 		getEligibility: ({ level, id, selectedId }) =>
 			isSkillTriggerEligible(level, id, selectedId),
 		changeEvent: (selector, level) => skillTriggerUpdate(selector, level)
@@ -216,10 +214,7 @@ export const SELECT_TEMPLATE = Object.freeze({
 			return id ? (srcData.coreBonuses.get(id)?.name ?? '') :
 				'Select a core bonus';
 		},
-		applyDescription: (bubble, { id }) => {
-			bubble.textContent = srcData.coreBonuses.get(id)?.effect;
-			bubble.hidden = false;
-		},
+		applyDescription: ({ id }) => srcData.coreBonuses.get(id)?.effect,
 		getEligibility: ({ level, id, selectedId }) =>
 			isCoreBonusEligible(level, id, selectedId),
 		changeEvent: (selector, level) => coreBonusUpdate(selector, level)
@@ -237,12 +232,8 @@ export const SELECT_TEMPLATE = Object.freeze({
 		},
 		getLabel: ({ id }) => {
 			return id ? srcData.frames.get(id)?.name : null;
-		}				,
-		applyDescription: (bubble, { id }) => {
-			bubble.innerHTML = srcData.frames.get(id)?.description
-				?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
-			bubble.hidden = false;
 		},
+		applyDescription: renderFrameDescription,
 		getEligibility: ({ level, id }) =>
 			isFrameEligible(level, id),
 		changeEvent: (selector, level) => frameUpdate(selector, level)
@@ -311,8 +302,56 @@ export const SELECT_TEMPLATE = Object.freeze({
 	}
 });
 
-function renderTalentDescription(bubble, { level, id, selectedId }) {
-	bubble.innerHTML = '';
+/**
+ * General solution to several sub-items attached to selector items:
+ * - special actions
+ * - deployable objects + characters
+ * - special ammunition
+ * 
+ * Recursively deploys sub-items into a single appendable div
+ * Uses an ancestor object as a fallback reference
+ * 
+ * @param {Object} item
+ * @param {Object} ancestor
+ * @returns {HTMLDivElement}
+ */
+function renderSubItemDescription(item, ancestor = null) {
+	// skip entirely if this item duplicates its ancestor
+	if (ancestor?.description && item.description === ancestor.description)
+		return null;
+
+	const container = document.createElement('div');
+
+	const name = document.createElement('h4');
+	name.textContent = item.name ?? ancestor.name;
+
+	// actions and deployables get tags alongside their name
+	if (item.activation || item.type) {
+		const type = document.createElement('span');
+		type.className = 'tag';
+		type.classList.toggle('action', item.activation !== undefined);
+		type.textContent = item.activation ?? item.type;
+		name.append(type);
+	}
+
+	const description = document.createElement('p');
+	description.innerHTML = (item.detail ?? item.description)
+		?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
+
+	container.append(name, description);
+
+	// this sub-item may itself grant special actions: render them below it
+	for (const subItem of item.actions ?? []) {
+		const subItemDiv = renderSubItemDescription(subItem, item);
+		if (subItemDiv)
+			container.append(subItemDiv);
+	}
+
+	return container;
+}
+
+function renderTalentDescription({ level, id, selectedId }) {
+	const content = [];
 
 	const rank = getTalentRank(level, id, selectedId);
 	const rankData = srcData.talents.get(id)?.ranks[rank];
@@ -325,87 +364,100 @@ function renderTalentDescription(bubble, { level, id, selectedId }) {
 	rankDescription.innerHTML =
 		rankData.description?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
 
-	bubble.append(rankName, rankDescription);
+	content.push(rankName, rankDescription);
 
-	for (const action of rankData?.actions ?? []) {
-		const actionName = document.createElement('h4');
-		actionName.textContent = action.name ?? rankData.name;
-		const actionType = document.createElement('span');
-		actionType.className = `tag action ${action.activation}`;
-		actionType.textContent = action.activation;
-		actionName.append(actionType);
+	for (const action of rankData.actions ?? [])
+		content.push(renderSubItemDescription(action, rankData));
 
-		const actionDescription = document.createElement('p');
-		actionDescription.innerHTML = action.detail;
-
-		bubble.append(actionName, actionDescription);
-	}
-
-	bubble.hidden = false;
+	return content;
 }
 
-function renderSystemDescription(bubble, { level, id }) {
-	bubble.innerHTML = '';
+function renderFrameDescription({ level, id }) {
+	const content = [];
+
+	const frame = srcData.frames.get(id);
+	if (!frame)
+		return null;
+
+	const tags = document.createElement('span');
+	tags.className = 'tags';
+	for (const type of frame.mechtype ?? []) {
+		const tag = document.createElement('div');
+		tag.className = 'tag';
+		tag.textContent = type;
+		tags.append(tag);
+	}
+	content.push(tags);
+
+	for (const trait of frame.traits ?? [])
+		content.push(renderSubItemDescription(trait));
+
+	if (frame.core_system) {
+		const coreSystem = frame.core_system;
+
+		const coreName = document.createElement('h3');
+		coreName.textContent = `Core System: ${coreSystem.name}`;
+
+		content.push(coreName, renderSubItemDescription({
+			name: coreSystem.active_name,
+			activation: coreSystem.activation,
+			detail: coreSystem.active_effect,
+			actions: coreSystem.active_actions
+		}));
+	}
+
+	return content;
+}
+
+function renderSystemDescription({ level, id }) {
+	const content = [];
 
 	const item = srcData.systems.get(id);
+	if (!item)
+		return null;
 
 	const tags = renderSystemTags(level, id);
 	if (tags.childElementCount) {
 		tags.style.justifyContent = 'right';
-		bubble.append(tags);
+		content.push(tags);
 	}
 
-	if (item?.effect) {
+	if (item.effect) {
 		const systemDescription = document.createElement('p');
 		systemDescription.innerHTML = item.effect
 			?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
-		bubble.append(systemDescription);
+		content.push(systemDescription);
 	}
 
-	for (const action of item?.actions ?? []) {
-		const actionName = document.createElement('h4');
-		actionName.textContent = action.name ?? item.name;
-		const actionType = document.createElement('span');
-		actionType.className = `tag action ${action.activation}`;
-		actionType.textContent = action.activation;
-		actionName.append(actionType);
+	const subItems = [
+		...item.ammo ?? [],
+		...item.actions ?? [],
+		...item.deployables ?? []
+	];
 
-		const actionDescription = document.createElement('p');
-		actionDescription.innerHTML = action.detail
-			?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
+	for (const action of subItems)
+		content.push(renderSubItemDescription(action, item));
 
-		bubble.append(actionName, actionDescription);
-	}
-
-	for (const deployable of item?.deployables ?? []) {
-		const deployableName = document.createElement('h4');
-		deployableName.textContent = deployable.name ?? item.name;
-		const deployableDescription = document.createElement('p');
-		deployableDescription.innerHTML = deployable.detail;
-
-		bubble.append(deployableName, deployableDescription);
-	}
-
-	bubble.hidden = false;
+	return content;
 }
 
-function renderWeaponDescription(bubble, { level, id }) {
-	bubble.innerHTML = '';
+function renderWeaponDescription({ level, id }) {
+	const content = [];
 
 	// add weapon tags
 	const tags = renderWeaponTags(level, { id }, -1, -1);
 	if (tags.childElementCount) {
 		tags.style.justifyContent = 'right';
-		bubble.append(tags);
+		content.push(tags);
 	}
 
 	const item = srcData.weapons.get(id);
 	const description = document.createElement('p');
 	description.innerHTML = (item?.description ?? item?.effect)
 		?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
-	bubble.append(description);
+	content.push(description);
 
-	bubble.hidden = false;
+	return content;
 }
 
 export function getSelectorValue(selector) {
@@ -739,7 +791,8 @@ function positionOptionInfo(option) {
 }
 
 function showOptionInfo(option, template, context) {
-	template.applyDescription?.(infoBubble, context);
+	infoBubble.replaceChildren(...template.applyDescription?.(context));
+	infoBubble.hidden = false;
 	selectorOverlay.append(infoBubble);
 	positionOptionInfo(option);
 }

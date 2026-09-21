@@ -745,7 +745,7 @@ select {
 .selector-menu {
 	display: block;
 	position: fixed;
-	z-index: 100;
+	z-index: 9;
 	max-height: 15rem;
 	overflow-y: auto;
 	border: 1px solid var(--border);
@@ -806,7 +806,11 @@ select {
 	margin-bottom: -0.5rem;
 }
 
-#selector-info-bubble > :last-child {
+#selector-info-bubble h4 .tag {
+	margin-left: 0.5rem;
+}
+
+#selector-info-bubble :last-child {
 	margin-bottom: 0;
 }
 
@@ -1141,7 +1145,6 @@ select {
 	border-color: color-mix(in srgb, var(--accent) 25%, var(--border));
 	background-color: color-mix(in srgb, var(--accent) 25%, transparent);
 	color: color-mix(in srgb, var(--accent) 25%, var(--border));
-	margin-left: 0.5rem;
 }
 
 /* mounts cell styles */
