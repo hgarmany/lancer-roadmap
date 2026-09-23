@@ -110,22 +110,21 @@ function refreshRoadmapMenu() {
 }
 
 /**
- * Set 
+ * Set title and license mark visibility based on the available header space
  */
-function updateTitleVisibility() {
+function updateHeaderVisibility() {
+	const licenseMark = Array.from(licenseMarks).find(mark =>
+		mark.getClientRects().length);
+
 	const titleRect = appTitle.getBoundingClientRect();
-	const buttonsRight = Math.max(
-		headerButtons.getBoundingClientRect().right,
-		...Array.from(headerButtons.children, button =>
-			button.getBoundingClientRect().right)
-	);
-	const markLeft = Array.from(licenseMarks).find(mark =>
-		mark.getClientRects().length)
-		?.getBoundingClientRect().left ?? Infinity;
+	const buttonsRect = headerButtons.getBoundingClientRect();
+	const licenseMarkRect = licenseMark.getBoundingClientRect();
 
 	appTitle.style.visibility =
-		titleRect.left >= buttonsRight &&
-		titleRect.right <= markLeft ? '' : 'hidden';
+		titleRect.left >= buttonsRect.right &&
+			titleRect.right <= licenseMarkRect.left ? '' : 'hidden';
+	licenseMark.style.visibility = buttonsRect.right <= licenseMarkRect.left ?
+		'' : 'hidden';
 }
 
 export function configureHeader() {
@@ -136,10 +135,10 @@ export function configureHeader() {
 		void openModal(button);
 	});
 
-	const headerResizeObserver = new ResizeObserver(updateTitleVisibility);
+	const headerResizeObserver = new ResizeObserver(updateHeaderVisibility);
 	for (const element of [header, headerButtons, appTitle, ...licenseMarks])
 		headerResizeObserver.observe(element);
-	updateTitleVisibility();
+	updateHeaderVisibility();
 }
 
 /**
