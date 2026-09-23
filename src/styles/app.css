@@ -14,6 +14,11 @@
 	--data-font: ui-monospace, monospace;
 	--on-strong: #fffaee;
 	--table-header: var(--text);
+
+	--tag-color: #71ce4b;
+	--protocol: #fe6d00;
+	--tech-action: #7e2477;
+	--reaction: #12b4b2;
 }
 
 html[data-theme="gms-light"] {
@@ -28,13 +33,11 @@ html[data-theme="gms-light"] {
 	--primary: #991e2a;
 	--accent: #c28200;
 	--focus: #1e998d;
-	--good: #6cff66;
 	--error: #ae2835;
 	--limited: #b67500;
 	--unique: #b5322a;
 	--exotic: #5b32a3;
 	--ai: #1a60ae;
-	--tag-color: #006912;
 }
 
 html[data-theme="gms-dark"] {
@@ -49,13 +52,11 @@ html[data-theme="gms-dark"] {
 	--primary: #802932;
 	--accent: #dfcd29;
 	--focus: #48a6a7;
-	--good: #035800;
 	--error: #e15664;
 	--limited: #ffc166;
 	--unique: #ff766e;
 	--exotic: #c693ff;
 	--ai: #64b5f6;
-	--tag-color: #50f0a8;
 }
 
 body {
@@ -103,7 +104,7 @@ main {
 header {
 	position: relative;
 	display: flex;
-	border-bottom: 4px solid var(--primary);
+	border-bottom: 0.25rem solid var(--primary);
 	background-color: var(--surface);
 	padding: 0 1rem;
 	justify-content: space-between;
@@ -202,7 +203,6 @@ html[data-theme="gms-dark"] .license-mark.dark {
 #roadmap-max-level {
 	box-sizing: border-box;
 	width: 3.75rem;
-	border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
 	border-radius: 0.25rem;
 	padding: 0.25rem;
 	background-color: var(--surface);
@@ -274,9 +274,9 @@ html[data-theme="gms-dark"] .license-mark.dark {
 #lcp-panel {
 	position: absolute;
 	top: calc(100% + 0.45rem);
-	z-index: 10;
+	z-index: 7;
 	width: min(24rem, calc(100vw - 2rem));
-	border: 1px solid var(--border);
+	border: 0.1rem solid var(--border);
 	border-radius: 0.5rem;
 	padding: 0.75rem;
 	background-color: var(--surface);
@@ -289,7 +289,7 @@ html[data-theme="gms-dark"] .license-mark.dark {
 	box-sizing: border-box;
 	width: 100%;
 	background-color: var(--surface-raised);
-	border: 1px solid var(--border);
+	border: 0.1rem solid var(--border);
 	border-radius: 0.25rem;
 	padding: 0.25rem;
 }
@@ -323,7 +323,7 @@ html[data-theme="gms-dark"] .license-mark.dark {
 }
 
 #lcp-packages .clear {
-	border: 1px solid var(--error);
+	border: 0.1rem solid var(--error);
 	padding: 0.15rem 0.5rem;
 	background-color: color-mix(in srgb, var(--error) 14%, var(--surface));
 }
@@ -337,8 +337,8 @@ html[data-theme="gms-dark"] .license-mark.dark {
 	display: block;
 	min-height: 1.25em;
 	color: var(--text-muted);
-	border-top: 1px solid color-mix(in srgb, var(--text-muted) 50%, var(--surface));
-	padding-top: 0.5rem;
+	border-top: 0.15rem solid color-mix(in srgb, var(--text-muted) 50%, var(--surface));
+	padding-top: 0.45rem;
 	font-size: x-small;
 }
 
@@ -352,13 +352,16 @@ html[data-theme="gms-dark"] .license-mark.dark {
 	font-size: 1rem;
 }
 
-.menu-btn:has(.menu-btn-input:focus-visible),
 #roadmap-name:focus-visible,
 #roadmap-max-level:focus-visible,
-#lcp-file:focus-visible,
-#lcp-manager > summary:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: 2px;
+#lcp-file:focus-visible {
+	outline: 0.15rem solid var(--focus);
+}
+
+#lcp-manager > summary:focus-visible,
+.menu-btn:focus-visible,
+.menu-btn:has(.menu-btn-input:focus-visible) {
+	background-color: var(--focus);
 }
 
 #lcp-manager > summary:hover,
@@ -433,7 +436,7 @@ html[data-exotics=true] .exotics-name::after {
 .roadmap-shell::after {
 	position: absolute;
 	top: var(--table-body-top, 0);
-	z-index: 10;
+	z-index: 5;
 	width: 1.25rem;
 	height: var(--table-body-height, 0);
 	opacity: 0;
@@ -986,6 +989,8 @@ select {
 	width: 100%;
 	height: 16px;
 	border: 0;
+	border-radius: 0;
+	outline: 0;
 	background-color: transparent;
 	color: inherit;
 	cursor: pointer;
@@ -1001,9 +1006,8 @@ select {
 	bottom: 0px;
 }
 
-.hase-button:hover:not(:disabled),
 .hase-button:focus-visible {
-	outline: none;
+	background-color: var(--focus);
 }
 
 .hase-button:disabled {
@@ -1118,50 +1122,63 @@ select {
 	white-space: nowrap;
 	padding: 0.1rem 0.5rem;
 
-	border: 1px solid var(--tag-color);
+	border: 1px solid color-mix(in srgb, var(--tag-color) 25%, var(--border));
 	border-radius: 1rem;
 
 	font-family: var(--data-font);
 	font-size: x-small;
 	font-weight: 900;
 	text-transform: uppercase;
-	color: var(--tag-color);
-
-	background-color: color-mix(in srgb, var(--tag-color) 15%, var(--surface));
+	background-color: color-mix(in srgb, var(--tag-color) 25%, var(--surface));
+	color: color-mix(in srgb, var(--tag-color) 25%, var(--border));
 	user-select: none;
 }
 
 .limited {
-	border-color: var(--limited);
-	background-color: color-mix(in srgb, var(--limited) 15%, var(--surface));
-	color: var(--limited);
+	border-color: color-mix(in srgb, var(--limited) 25%, var(--border));
+	background-color: color-mix(in srgb, var(--limited) 25%, var(--surface));
+	color: color-mix(in srgb, var(--limited) 25%, var(--border));
 }
 
 .unique,
 .tag.unique {
 	border-color: var(--unique);
-	background-color: color-mix(in srgb, var(--unique) 15%, var(--surface));
+	background-color: color-mix(in srgb, var(--unique) 25%, var(--surface));
 	color: var(--unique);
 }
 
 .exotic,
 .tag.exotic {
 	border-color: var(--exotic);
-	background-color: color-mix(in srgb, var(--exotic) 15%, var(--surface));
+	background-color: color-mix(in srgb, var(--exotic) 25%, var(--surface));
 	color: var(--exotic);
 }
 
 .ai,
 .tag.ai {
 	border-color: var(--ai);
-	background-color: color-mix(in srgb, var(--ai) 15%, var(--surface));
+	background-color: color-mix(in srgb, var(--ai) 25%, var(--surface));
 	color: var(--ai);
 }
 
-.action {
-	border-color: color-mix(in srgb, var(--accent) 25%, var(--border));
-	background-color: color-mix(in srgb, var(--accent) 25%, transparent);
-	color: color-mix(in srgb, var(--accent) 25%, var(--border));
+.protocol {
+	border-color: color-mix(in srgb, var(--protocol) 25%, var(--border));
+	background-color: color-mix(in srgb, var(--protocol) 25%, var(--surface));
+	color: color-mix(in srgb, var(--protocol) 25%, var(--border));
+}
+
+.quick-tech,
+.full-tech,
+.invade {
+	border-color: color-mix(in srgb, var(--tech-action) 25%, var(--border));
+	background-color: color-mix(in srgb, var(--tech-action) 25%, var(--surface));
+	color: color-mix(in srgb, var(--tech-action) 25%, var(--border));
+}
+
+.reaction {
+	border-color: color-mix(in srgb, var(--reaction) 25%, var(--border));
+	background-color: color-mix(in srgb, var(--reaction) 25%, var(--surface));
+	color: color-mix(in srgb, var(--reaction) 25%, var(--border));
 }
 
 /* mounts cell styles */
@@ -1273,7 +1290,7 @@ select {
 	width: min-content;
 	border: 1px solid var(--border);
 	border-radius: 1rem;
-	background-color: color-mix(in srgb, var(--good) 50%, var(--surface));
+	background-color: color-mix(in srgb, var(--tag-color) 25%, var(--surface));
 	padding: 0.1rem 0.5rem;
 	margin-bottom: 0.5rem;
 	white-space: nowrap;
@@ -1288,7 +1305,7 @@ select {
 	height: 100%;
 	width: 100%;
 	background-color: color-mix(in srgb, var(--surface) 50%, transparent);
-	z-index: 10;
+	z-index: 8;
 }
 
 #modal-dialog {

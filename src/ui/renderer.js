@@ -157,6 +157,14 @@ export function configureToolMenu() {
 
 	themeToggle.checked =
 		document.documentElement.dataset.theme === THEME.DARK;
+	for (const toggle of [themeToggle, exoticsToggle]) {
+		toggle.addEventListener('keydown', event => {
+			if (event.key !== 'Enter')
+				return;
+			event.preventDefault();
+			event.currentTarget.click();
+		});
+	}
 
 	themeToggle.addEventListener('change', event => {
 		const theme = event.currentTarget.checked ? THEME.DARK : THEME.LIGHT;

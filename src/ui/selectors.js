@@ -348,7 +348,9 @@ function renderSubItemDescription(item, ancestor = null) {
 	if (item.activation || item.type) {
 		const type = document.createElement('span');
 		type.className = 'tags tag';
-		type.classList.toggle('action', item.activation !== undefined);
+		if (item.activation)
+			type.classList.add(item.activation
+				.replace(/\s+/g, '-').toLowerCase());
 		type.textContent = item.activation ?? item.type;
 		name.append(type);
 	}
@@ -475,67 +477,83 @@ function renderWeaponDescription({ level, id }) {
 	}
 	content.push(header);
 
-	if (item.effect) {
-		const description = document.createElement('p');
-		description.innerHTML = item.effect
-			?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
-		content.push(description);
-	}
-
-	if (item.range) {
-		const rangeDiv = document.createElement('p');
-		rangeDiv.className = 'range';
-		for (const rangeData of item.range) {
-			const range = document.createElement('span');
-			range.innerHTML = `<b>${rangeData.type}:</b> ${rangeData.val}`;
-			rangeDiv.append(range);
+	for (const profile of item.profiles ?? [item]) {
+		if (profile.name !== item.name) {
+			const profileName = document.createElement('h4');
+			profileName.textContent = profile.name;
+			content.push(profileName);
 		}
-		content.push(rangeDiv);
-	}
 
-	if (item.damage) {
-		const damageDiv = document.createElement('p');
-		damageDiv.className = 'damage';
-		for (const damageData of item.damage) {
-			const damage = document.createElement('span');
-			damage.innerHTML = `${damageData.val} ${damageData.type}`;
-			damageDiv.append(damage);
+		if (profile.effect) {
+			const description = document.createElement('p');
+			description.innerHTML = profile.effect
+				?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
+			content.push(description);
 		}
-		content.push(damageDiv);
+
+		if (profile.range) {
+			const rangeDiv = document.createElement('p');
+			rangeDiv.className = 'range';
+			for (const rangeData of profile.range) {
+				const range = document.createElement('span');
+				range.innerHTML = `<b>${rangeData.type}:</b> ${rangeData.val}`;
+				rangeDiv.append(range);
+			}
+			content.push(rangeDiv);
+		}
+
+		if (profile.damage) {
+			const damageDiv = document.createElement('p');
+			damageDiv.className = 'damage';
+			for (const damageData of profile.damage) {
+				const damage = document.createElement('span');
+				damage.innerHTML = `${damageData.val} ${damageData.type}`;
+				damageDiv.append(damage);
+			}
+			content.push(damageDiv);
+		}
+
+		if (profile.on_attack) {
+			const attackDescription = document.createElement('p');
+			attackDescription.innerHTML += '<b>On Attack:</b> ' +
+				(typeof profile.on_attack === 'string' ?
+					profile.on_attack : profile.on_attack.detail);
+			content.push(attackDescription);
+		}
+
+		if (profile.on_hit) {
+			const hitDescription = document.createElement('p');
+			hitDescription.innerHTML += '<b>On Hit:</b> ' +
+				(typeof profile.on_hit === 'string' ?
+					profile.on_hit : profile.on_hit.detail);
+			content.push(hitDescription);
+		}
+
+		if (profile.on_crit) {
+			const critDescription = document.createElement('p');
+			critDescription.innerHTML += '<b>On Crit:</b> ' +
+				(typeof profile.on_crit === 'string' ?
+					profile.on_crit : profile.on_crit.detail);
+			content.push(critDescription);
+		}
+
+		if (profile.on_miss) {
+			const missDescription = document.createElement('p');
+			missDescription.innerHTML += '<b>On Miss:</b> ' +
+				(typeof profile.on_miss === 'string' ?
+					profile.on_miss : profile.on_miss.detail);
+			content.push(missDescription);
+		}
+
+		const subItems = [
+			...profile.ammo ?? [],
+			...profile.deployables ?? []
+		];
+
+		for (const action of subItems)
+			content.push(renderSubItemDescription(action, profile));
 	}
 
-	if (item.on_attack) {
-		const attackDescription = document.createElement('p');
-		attackDescription.innerHTML += '<b>On Attack:</b> ' +
-			(typeof item.on_attack === 'string' ?
-				item.on_attack : item.on_attack.detail);
-		content.push(attackDescription);
-	}
-
-	if (item.on_hit) {
-		const hitDescription = document.createElement('p');
-		hitDescription.innerHTML += '<b>On Hit:</b> ' +
-			(typeof item.on_hit === 'string' ?
-				item.on_hit : item.on_hit.detail);
-		content.push(hitDescription);
-	}
-
-	if (item.on_crit) {
-		const critDescription = document.createElement('p');
-		critDescription.innerHTML += '<b>On Crit:</b> ' +
-			(typeof item.on_crit === 'string' ?
-				item.on_crit : item.on_crit.detail);
-		content.push(critDescription);
-	}
-
-	if (item.on_miss) {
-		const missDescription = document.createElement('p');
-		missDescription.innerHTML += '<b>On Miss:</b> ' +
-			(typeof item.on_miss === 'string' ?
-				item.on_miss : item.on_miss.detail);
-		content.push(missDescription);
-	}
-	
 	return content;
 }
 
