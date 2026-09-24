@@ -224,6 +224,26 @@ for (const eventName of ['pointerup', 'pointercancel']) {
 	});
 }
 
+// for touchscreens: suppress default click generation on press-and-hold
+document.addEventListener('click', event => {
+	const targetAnchor = getInfoBubbleContext(event.target)?.anchor;
+	if (performance.now() < suppressedClick?.expires &&
+		targetAnchor === suppressedClick?.anchor) {
+		event.preventDefault();
+		event.stopImmediatePropagation();
+	}
+
+	suppressedClick = null;
+}, true);
+
+// for touchscreens: suppress default press-and-hold behavior
+document.addEventListener('contextmenu', event => {
+	const targetAnchor = getInfoBubbleContext(event.target)?.anchor;
+	if (targetAnchor && (targetAnchor === pressAndHold?.request.anchor ||
+		targetAnchor === suppressedClick?.anchor))
+		event.preventDefault();
+});
+
 // remove info bubble whenever the selector menu is scrolled through
 document.addEventListener('scroll', event => {
 	if (infoSources.has(event.target))

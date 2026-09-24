@@ -1,6 +1,9 @@
 // data/normalizeLicenses.js
 
-const excludeLicenseNamesIds = [
+import { systemUpdate } from "../ui/updates";
+import { srcData } from "./loader";
+
+const excludeSources = [
 	'GMS'
 ];
 
@@ -16,9 +19,25 @@ export function getLicenses(gameData) {
 
 	for (const frame of gameData.frames) {
 		const id = frame.license_id;
-		if (!licenses.get(id) &&
-			!excludeLicenseNamesIds.includes(frame.source))
-			licenses.set(id, { id, name: frame?.name, source: frame.source });
+		if (!licenses.get(id) && !excludeSources.includes(frame.source)) {
+			const licenseItems = [
+				...gameData.systems,
+				...gameData.mods,
+				...gameData.weapons].filter(item =>
+					item.license_id === id || item.license === frame?.name);
+
+			const newLicense = {
+				id,
+				name: frame?.name,
+				source: frame.source,
+				items: Array.from({ length: 3 }, (_, idx) => licenseItems
+					.filter(item => item.license_level - 1 === idx)
+					.map(item => item.id)
+				)
+			};
+
+			licenses.set(id, newLicense);
+		}
 	}
 
 	return licenses;

@@ -191,6 +191,7 @@ export const SELECT_TEMPLATE = Object.freeze({
 			return srcData.licenses.get(id)?.name +
 				(showRank ? ` ${ROMAN_NUMERALS[rank]}` : '');
 		},
+		applyDescription: renderLicenseDescription,
 		getEligibility: ({ level, id, selectedId }) =>
 			isLicenseEligible(level, id, selectedId),
 		changeEvent: (selector, level) => licenseUpdate(selector, level)
@@ -214,7 +215,7 @@ export const SELECT_TEMPLATE = Object.freeze({
 		applyDescription: ({ id }) => {
 			const content = document.createElement('p');
 			content.innerHTML = srcData.coreBonuses.get(id)?.effect;
-			return [content];
+			return content;
 		},
 		getEligibility: ({ level, id, selectedId }) =>
 			isCoreBonusEligible(level, id, selectedId),
@@ -674,6 +675,21 @@ function renderTalentDescription({ level, id, selectedId }) {
 
 	for (const action of rankData.actions ?? [])
 		content.push(renderSubItemDescription(action, rankData));
+
+	return content;
+}
+
+function renderLicenseDescription({ level, id, selectedId }) {
+	const content = document.createElement('p');
+
+	const rank = getLicenseRank(level, id, selectedId);
+	const licenseItems = srcData.licenses.get(id).items[rank];
+
+	for (const id of licenseItems) {
+		const item = srcData.systems.get(id) ?? srcData.weapons.get(id);
+		if (item)
+			content.innerHTML += item.name + '<br>';
+	}
 
 	return content;
 }
