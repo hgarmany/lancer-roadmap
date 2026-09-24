@@ -831,12 +831,12 @@ select {
 	margin-bottom: -0.5rem;
 }
 
-#selector-info-bubble h4 .header-text {
-	border-bottom: 0.1rem solid var(--text-muted);
-}
-
 #selector-info-bubble h4 .tags {
 	margin-left: 0.5rem;
+}
+
+#selector-info-bubble .indent {
+	margin-left: 1rem;
 }
 
 #selector-info-bubble :last-child {

@@ -54,6 +54,11 @@ import ipsnLogoUrl from '../../assets/manufacturer-icons/IPS-N_logo.svg';
 import sscLogoUrl from '../../assets/manufacturer-icons/SSC_logo.svg';
 
 import {
+	TAGS,
+	doesItemHaveTag
+} from '../../rules/installsCommon.js';
+
+import {
 	getSkillTriggerRank,
 	isSkillTriggerEligible
 } from '../../rules/skillTriggers.js';
@@ -97,6 +102,21 @@ import {
 const selectorMenus = new WeakMap();
 let activeSelector = null;
 const selectorOverlay = document.getElementById('selector-overlay');
+
+const MANUFACTURERS = Object.freeze({
+	'GMS': 0,
+	'IPS-N': 1,
+	'SSC': 2,
+	'HORUS': 3,
+	'HA': 4
+});
+
+const MOUNTS = Object.freeze({
+	'Superheavy': 0,
+	'Heavy': 1,
+	'Main': 2,
+	'Auxiliary': 3
+});
 
 const MANUFACTURER_LOGOS = new Map([
 	['GMS', gmsLogoUrl],
@@ -145,7 +165,8 @@ export const SELECT_TEMPLATE = Object.freeze({
 		title: 'Talent',
 		allowClear: true,
 		redrawLabels: true,
-		getSrcItems: () => srcData.talents,
+		getSrcItems: () => [...srcData.talents.entries()]
+			.sort((a, b) => a[1].name.toLowerCase() > b[1].name.toLowerCase()),
 		readLevel: (level) => roadmap.ll[level].talentIds,
 		write: ({ level, idx, id }) => {
 			const oldId = roadmap.ll[level].talentIds[idx];
@@ -173,7 +194,13 @@ export const SELECT_TEMPLATE = Object.freeze({
 		title: 'License',
 		allowClear: true,
 		redrawLabels: true,
-		getSrcItems: () => srcData.licenses,
+		getSrcItems: () => [...srcData.licenses.entries()]
+			.sort((a, b) => {
+				if (a[1].source !== b[1].source)
+					return MANUFACTURERS[a[1].source] >
+						MANUFACTURERS[b[1].source];
+				return a[1].name.toLowerCase() > b[1].name.toLowerCase();
+			}),
 		readLevel: (level) => roadmap.ll[level].licenseId,
 		write: ({ level, id }) => {
 			const oldId = roadmap.ll[level].licenseId;
@@ -200,7 +227,13 @@ export const SELECT_TEMPLATE = Object.freeze({
 		type: 'core-bonus',
 		title: 'Core Bonus',
 		allowClear: true,
-		getSrcItems: () => srcData.coreBonuses,
+		getSrcItems: () => [...srcData.coreBonuses.entries()]
+			.sort((a, b) => {
+				if (a[1].source !== b[1].source)
+					return MANUFACTURERS[a[1].source] >
+						MANUFACTURERS[b[1].source];
+				return a[1].name.toLowerCase() > b[1].name.toLowerCase();
+			}),
 		readLevel: (level) => roadmap.ll[level].coreBonusId,
 		write: ({ level, id }) => {
 			const oldId = roadmap.ll[level].coreBonusId;
@@ -223,7 +256,17 @@ export const SELECT_TEMPLATE = Object.freeze({
 	},
 	FRAME: {
 		type: 'frame',
-		getSrcItems: () => srcData.frames,
+		getSrcItems: () => [...srcData.frames.entries()]
+			.sort((a, b) => {
+				if (a[0] === 'mf_standard_pattern_i_everest')
+					return -1;
+				if (a[1].license_level != b[1].license_level)
+					return a[1].license_level < b[1].license_level;
+				if (a[1].source !== b[1].source)
+					return MANUFACTURERS[a[1].source] >
+						MANUFACTURERS[b[1].source];
+				return a[1].name.toLowerCase() > b[1].name.toLowerCase();
+			}),
 		readLevel: (level) => getEffectiveFrameId(level),
 		write: ({ level, id }) => {
 			roadmap.ll[level].frameId =
@@ -244,7 +287,7 @@ export const SELECT_TEMPLATE = Object.freeze({
 		type: 'weapon',
 		allowClear: true,
 		redrawLabels: true,
-		getSrcItems: () => srcData.weapons,
+		getSrcItems: () => [...srcData.weapons.entries()].sort(sortEquipment),
 		write: ({ level, mountIdx, slotIdx, id }) =>
 			setWeaponSelection(level, mountIdx, slotIdx, id),
 		getLabel: ({ id, slot = null }) => {
@@ -260,7 +303,7 @@ export const SELECT_TEMPLATE = Object.freeze({
 		type: 'system',
 		allowClear: true,
 		redrawLabels: true,
-		getSrcItems: () => srcData.systems,
+		getSrcItems: () => [...srcData.systems.entries()].sort(sortEquipment),
 		readLevel: (level) => {
 			for (let i = level; i >= 0; i--) {
 				if (roadmap.ll[i].systems[0])
@@ -597,6 +640,35 @@ export function renderWeaponSelector(
 	return selector;
 }
 
+function sortEquipment(a, b) {
+	const exoticA = doesItemHaveTag(a[1], TAGS.EXOTIC);
+	const exoticB = doesItemHaveTag(b[1], TAGS.EXOTIC);
+	if (exoticA != exoticB)
+		return exoticA;
+
+	if ((a[1].source === 'GMS') != (b[1].source === 'GMS'))
+		return a[1].source === 'GMS';
+	if (a[1].source !== b[1].source)
+		return MANUFACTURERS[a[1].source] >
+			MANUFACTURERS[b[1].source];
+
+	if (a[1].license_id !== b[1].license_id) {
+		const licenseA = srcData.licenses.get(a[1].license_id);
+		const licenseB = srcData.licenses.get(b[1].license_id);
+		if (!licenseA)
+			return -1;
+		if (!licenseB)
+			return 1;
+		return licenseA.name.toLowerCase() >
+			licenseB.name.toLowerCase();
+	}
+
+	if (a[1].mount !== b[1].mount)
+		return MOUNTS[a[1].mount] > MOUNTS[b[1].mount];
+
+	return a[1].name.toLowerCase() > b[1].name.toLowerCase();
+}
+
 /**
  * General solution to several sub-items attached to selector items:
  * - special actions
@@ -611,45 +683,51 @@ export function renderWeaponSelector(
  * @returns {HTMLDivElement}
  */
 function renderSubItemDescription(item, ancestor = null) {
-	// skip entirely if this item duplicates its ancestor
-	const itemDescription = item.detail ?? item.description ?? null;
-	const ancestorDescription =
-		ancestor?.detail ?? ancestor?.description ?? null;
-	if (ancestorDescription && itemDescription === ancestorDescription)
-		return null;
-
 	const container = document.createElement('div');
 
-	const name = document.createElement('h4');
-	const nameText = document.createElement('span');
-	nameText.className = 'header-text';
-	nameText.textContent = item.name ?? ancestor.name;
-	name.append(nameText);
+	const itemDescription = item.detail ?? item.description ?? null;
 
-	// actions and deployables get tags alongside their name
-	if (item.activation || item.type) {
-		const type = document.createElement('span');
-		type.className = 'tags tag';
-		if (item.frequency)
-			type.textContent += `${item.frequency} `;
-		if (item.activation)
-			type.classList.add(item.activation
-				.replace(/\s+/g, '-').toLowerCase());
-		type.textContent += item.activation ?? item.type;
-		name.append(type);
+	if (itemDescription) {
+		const ancestorDescription =
+			ancestor?.detail ?? ancestor?.description ?? null;
+
+		// skip entirely if this item duplicates its ancestor
+		if (ancestorDescription && itemDescription === ancestorDescription)
+			return null;
+
+		const name = document.createElement('h4');
+		const nameText = document.createElement('span');
+		nameText.className = 'header-text';
+		nameText.innerHTML = item.name ?? ancestor.name;
+		name.append(nameText);
+
+		// actions and deployables get tags alongside their name
+		if (item.activation || item.type) {
+			const type = document.createElement('span');
+			type.className = 'tags tag';
+			if (item.frequency)
+				type.textContent += `${item.frequency} `;
+			if (item.activation)
+				type.classList.add(item.activation
+					.replace(/\s+/g, '-').toLowerCase());
+			type.textContent += item.activation ?? item.type;
+			name.append(type);
+		}
+
+		const description = document.createElement('p');
+		description.innerHTML = itemDescription
+			?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
+
+		container.append(name, description);
 	}
-
-	const description = document.createElement('p');
-	description.innerHTML = itemDescription
-		?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
-
-	container.append(name, description);
 
 	// this sub-item may itself grant special actions: render them below it
 	for (const subItem of item.actions ?? []) {
 		const subItemDiv = renderSubItemDescription(subItem, item);
-		if (subItemDiv)
+		if (subItemDiv) {
+			subItemDiv.classList.add('indent');
 			container.append(subItemDiv);
+		}
 	}
 
 	return container;
@@ -722,8 +800,18 @@ function renderFrameDescription({ level, id }) {
 
 		const corePowerDiv = document.createElement('div');
 		corePowerDiv.className = 'core-power-info';
-		corePowerDiv.append(coreName, renderSubItemDescription({
-			name: coreSystem.active_name,
+		corePowerDiv.append(coreName);
+
+		if (coreSystem.passive_name) {
+			corePowerDiv.append(renderSubItemDescription({
+				name: `Passive: <u>${coreSystem.passive_name}</u>`,
+				detail: coreSystem.passive_effect,
+				actions: coreSystem.passive_actions
+			}));
+		}
+
+		corePowerDiv.append(renderSubItemDescription({
+			name: `Active: <u>${coreSystem.active_name}</u>`,
 			activation: coreSystem.activation,
 			detail: coreSystem.active_effect,
 			actions: coreSystem.active_actions
@@ -772,7 +860,7 @@ function renderTextAddendum(data, name) {
 		?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
 	const textElement = document.createElement('p');
 	if (name)
-		textElement.innerHTML += `<b>${name}:</b>`; 
+		textElement.innerHTML += `<b>${name}:</b> `; 
 	textElement.innerHTML += description;
 	return textElement;
 }
@@ -839,6 +927,7 @@ function renderWeaponDescription({ level, id }) {
 
 		const subItems = [
 			...profile.ammo ?? [],
+			...profile.actions ?? [],
 			...profile.deployables ?? []
 		];
 
