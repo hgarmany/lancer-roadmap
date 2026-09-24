@@ -32,7 +32,7 @@ import {
 	SELECT_TEMPLATE,
 	renderSelector,
 	renderWeaponSelector,
-} from './selectors.js';
+} from './selectors/selectors.js';
 
 import {
 	applyAttachmentManager,

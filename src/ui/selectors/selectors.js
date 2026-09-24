@@ -1,40 +1,41 @@
-/**
- * ui/selectors.js
- * 
- * authority on initialization + configuration of selectors
- */
+// ui/selectors/selectors.js
 
 import {
 	roadmap
-} from '../data/roadmap.js';
+} from '../../data/roadmap.js';
 
 import {
 	cumulativeCatalog,
 	incrementFromLevel,
 	decrementFromLevel
-} from '../data/cumulativeCatalog.js';
+} from '../../data/cumulativeCatalog.js';
 
 import {
 	srcData
-} from '../data/loader.js';
+} from '../../data/loader.js';
 
 import {
 	MAX_SKILL_RANK,
 	MAX_TALENT_RANK,
 	MAX_LICENSE_RANK,
 	ROMAN_NUMERALS
-} from '../constants.js';
+} from '../../constants.js';
+
+import {
+	infoSources,
+	hideInfoBubble
+} from './infoBubble.js';
 
 import {
 	refreshStats,
 	refreshBudgetPill
-} from './refreshRenderModules.js';
+} from '../refreshRenderModules.js';
 
 import {
 	applyAttachmentManager,
 	renderSystemTags,
 	renderWeaponTags
-} from './tags.js';
+} from '../tags.js';
 
 import {
 	skillTriggerUpdate,
@@ -44,78 +45,58 @@ import {
 	frameUpdate,
 	weaponUpdate,
 	systemUpdate
-} from './updates.js';
+} from '../updates.js';
+
+import gmsLogoUrl from '../../assets/manufacturer-icons/GMS_logo.svg';
+import haLogoUrl from '../../assets/manufacturer-icons/HA_logo.svg';
+import horusLogoUrl from '../../assets/manufacturer-icons/HORUS_logo.svg';
+import ipsnLogoUrl from '../../assets/manufacturer-icons/IPS-N_logo.svg';
+import sscLogoUrl from '../../assets/manufacturer-icons/SSC_logo.svg';
 
 import {
 	getSkillTriggerRank,
 	isSkillTriggerEligible
-} from '../rules/skillTriggers.js';
+} from '../../rules/skillTriggers.js';
 
 import {
 	getTalentRank,
 	isTalentEligible
-} from '../rules/talents.js';
+} from '../../rules/talents.js';
 
 import {
 	getLicenseRank,
 	isLicenseEligible
-} from '../rules/licenses.js';
+} from '../../rules/licenses.js';
 
 import {
 	isCoreBonusEligible
-} from '../rules/coreBonuses.js';
+} from '../../rules/coreBonuses.js';
 
 import {
 	getEffectiveFrameId,
 	isFrameEligible
-} from '../rules/frames.js';
+} from '../../rules/frames.js';
 
 import {
 	moveAttachment
-} from '../rules/attachments.js';
-
-import gmsLogoUrl from '../assets/manufacturer-icons/GMS_logo.svg';
-import haLogoUrl from '../assets/manufacturer-icons/HA_logo.svg';
-import horusLogoUrl from '../assets/manufacturer-icons/HORUS_logo.svg';
-import ipsnLogoUrl from '../assets/manufacturer-icons/IPS-N_logo.svg';
-import sscLogoUrl from '../assets/manufacturer-icons/SSC_logo.svg';
+} from '../../rules/attachments.js';
 
 import {
 	isWeaponEligible,
 	setWeaponSelection,
 	deepCopyMounts,
 	resetEmptyMounts
-} from '../rules/weapons.js';
+} from '../../rules/weapons.js';
 
 import {
 	isSystemEligible,
 	hasEligibleSystem,
 	configureSystems
-} from '../rules/systems.js';
+} from '../../rules/systems.js';
 
 const selectorMenus = new WeakMap();
 let activeSelector = null;
 const selectorOverlay = document.getElementById('selector-overlay');
-const infoBubble = document.getElementById('selector-info-bubble');
-let infoBubbleHideTimer = null;
-
-function cancelInfoBubbleHide() {
-	clearTimeout(infoBubbleHideTimer);
-	infoBubbleHideTimer = null;
-}
-
-function hideInfoBubble() {
-	cancelInfoBubbleHide();
-	infoBubble.hidden = true;
-}
-
-function scheduleInfoBubbleHide() {
-	cancelInfoBubbleHide();
-	infoBubbleHideTimer = setTimeout(hideInfoBubble, 100);
-}
-
-infoBubble.addEventListener('mouseenter', cancelInfoBubbleHide);
-infoBubble.addEventListener('mouseleave', hideInfoBubble);
 
 const MANUFACTURER_LOGOS = new Map([
 	['GMS', gmsLogoUrl],
@@ -230,7 +211,11 @@ export const SELECT_TEMPLATE = Object.freeze({
 			return id ? (srcData.coreBonuses.get(id)?.name ?? '') :
 				'Select a core bonus';
 		},
-		applyDescription: ({ id }) => srcData.coreBonuses.get(id)?.effect,
+		applyDescription: ({ id }) => {
+			const content = document.createElement('p');
+			content.innerHTML = srcData.coreBonuses.get(id)?.effect;
+			return [content];
+		},
 		getEligibility: ({ level, id, selectedId }) =>
 			isCoreBonusEligible(level, id, selectedId),
 		changeEvent: (selector, level) => coreBonusUpdate(selector, level)
@@ -317,245 +302,6 @@ export const SELECT_TEMPLATE = Object.freeze({
 		changeEvent: (selector, level) => systemUpdate(selector, level)
 	}
 });
-
-/**
- * General solution to several sub-items attached to selector items:
- * - special actions
- * - deployable objects + characters
- * - special ammunition
- * 
- * Recursively deploys sub-items into a single appendable div
- * Uses an ancestor object as a fallback reference
- * 
- * @param {Object} item
- * @param {Object} ancestor
- * @returns {HTMLDivElement}
- */
-function renderSubItemDescription(item, ancestor = null) {
-	// skip entirely if this item duplicates its ancestor
-	const itemDescription = item.detail ?? item.description ?? null;
-	const ancestorDescription =
-		ancestor?.detail ?? ancestor?.description ?? null;
-	if (ancestorDescription && itemDescription === ancestorDescription)
-		return null;
-
-	const container = document.createElement('div');
-
-	const name = document.createElement('h4');
-	name.textContent = item.name ?? ancestor.name;
-
-	// actions and deployables get tags alongside their name
-	if (item.activation || item.type) {
-		const type = document.createElement('span');
-		type.className = 'tags tag';
-		if (item.activation)
-			type.classList.add(item.activation
-				.replace(/\s+/g, '-').toLowerCase());
-		type.textContent = item.activation ?? item.type;
-		name.append(type);
-	}
-
-	const description = document.createElement('p');
-	description.innerHTML = itemDescription
-		?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
-
-	container.append(name, description);
-
-	// this sub-item may itself grant special actions: render them below it
-	for (const subItem of item.actions ?? []) {
-		const subItemDiv = renderSubItemDescription(subItem, item);
-		if (subItemDiv)
-			container.append(subItemDiv);
-	}
-
-	return container;
-}
-
-function renderTalentDescription({ level, id, selectedId }) {
-	const content = [];
-
-	const rank = getTalentRank(level, id, selectedId);
-	const rankData = srcData.talents.get(id)?.ranks[rank];
-	if (!rankData)
-		return null;
-
-	const rankName = document.createElement('h3');
-	rankName.textContent = rankData.name;
-	const rankDescription = document.createElement('p');
-	rankDescription.innerHTML =
-		rankData.description?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
-
-	content.push(rankName, rankDescription);
-
-	for (const action of rankData.actions ?? [])
-		content.push(renderSubItemDescription(action, rankData));
-
-	return content;
-}
-
-function renderFrameDescription({ level, id }) {
-	const content = [];
-
-	const frame = srcData.frames.get(id);
-	if (!frame)
-		return null;
-
-	const tags = document.createElement('span');
-	tags.className = 'tags';
-	for (const type of frame.mechtype ?? []) {
-		const tag = document.createElement('div');
-		tag.className = 'tag';
-		tag.textContent = type;
-		tags.append(tag);
-	}
-	content.push(tags);
-
-	for (const trait of frame.traits ?? [])
-		content.push(renderSubItemDescription(trait));
-
-	if (frame.core_system) {
-		const coreSystem = frame.core_system;
-
-		const coreName = document.createElement('h3');
-		coreName.textContent = `Core System: ${coreSystem.name}`;
-
-		content.push(coreName, renderSubItemDescription({
-			name: coreSystem.active_name,
-			activation: coreSystem.activation,
-			detail: coreSystem.active_effect,
-			actions: coreSystem.active_actions
-		}));
-	}
-
-	return content;
-}
-
-function renderSystemDescription({ level, id }) {
-	const content = [];
-
-	const item = srcData.systems.get(id);
-	if (!item)
-		return null;
-
-	const tags = renderSystemTags(level, id, true);
-	if (tags.childElementCount) {
-		tags.style.justifyContent = 'right';
-		content.push(tags);
-	}
-
-	if (item.effect) {
-		const systemDescription = document.createElement('p');
-		systemDescription.innerHTML = item.effect
-			?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
-		content.push(systemDescription);
-	}
-
-	const subItems = [
-		...item.ammo ?? [],
-		...item.actions ?? [],
-		...item.deployables ?? []
-	];
-
-	for (const action of subItems)
-		content.push(renderSubItemDescription(action, item));
-
-	return content;
-}
-
-function renderWeaponDescription({ level, id }) {
-	const content = [];
-
-	const item = srcData.weapons.get(id);
-
-	const header = document.createElement('h4');
-	header.textContent = `${item.mount} ${item.type}`;
-	// add weapon tags
-	const tags = renderWeaponTags(level, { id }, -1, -1, true);
-	if (tags.childElementCount) {
-		tags.style.justifyContent = 'right';
-		header.append(tags);
-	}
-	content.push(header);
-
-	for (const profile of item.profiles ?? [item]) {
-		if (profile.name !== item.name) {
-			const profileName = document.createElement('h4');
-			profileName.textContent = profile.name;
-			content.push(profileName);
-		}
-
-		if (profile.effect) {
-			const description = document.createElement('p');
-			description.innerHTML = profile.effect
-				?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
-			content.push(description);
-		}
-
-		if (profile.range) {
-			const rangeDiv = document.createElement('p');
-			rangeDiv.className = 'range';
-			for (const rangeData of profile.range) {
-				const range = document.createElement('span');
-				range.innerHTML = `<b>${rangeData.type}:</b> ${rangeData.val}`;
-				rangeDiv.append(range);
-			}
-			content.push(rangeDiv);
-		}
-
-		if (profile.damage) {
-			const damageDiv = document.createElement('p');
-			damageDiv.className = 'damage';
-			for (const damageData of profile.damage) {
-				const damage = document.createElement('span');
-				damage.innerHTML = `${damageData.val} ${damageData.type}`;
-				damageDiv.append(damage);
-			}
-			content.push(damageDiv);
-		}
-
-		if (profile.on_attack) {
-			const attackDescription = document.createElement('p');
-			attackDescription.innerHTML += '<b>On Attack:</b> ' +
-				(typeof profile.on_attack === 'string' ?
-					profile.on_attack : profile.on_attack.detail);
-			content.push(attackDescription);
-		}
-
-		if (profile.on_hit) {
-			const hitDescription = document.createElement('p');
-			hitDescription.innerHTML += '<b>On Hit:</b> ' +
-				(typeof profile.on_hit === 'string' ?
-					profile.on_hit : profile.on_hit.detail);
-			content.push(hitDescription);
-		}
-
-		if (profile.on_crit) {
-			const critDescription = document.createElement('p');
-			critDescription.innerHTML += '<b>On Crit:</b> ' +
-				(typeof profile.on_crit === 'string' ?
-					profile.on_crit : profile.on_crit.detail);
-			content.push(critDescription);
-		}
-
-		if (profile.on_miss) {
-			const missDescription = document.createElement('p');
-			missDescription.innerHTML += '<b>On Miss:</b> ' +
-				(typeof profile.on_miss === 'string' ?
-					profile.on_miss : profile.on_miss.detail);
-			content.push(missDescription);
-		}
-
-		const subItems = [
-			...profile.ammo ?? [],
-			...profile.deployables ?? []
-		];
-
-		for (const action of subItems)
-			content.push(renderSubItemDescription(action, profile));
-	}
-
-	return content;
-}
 
 export function getSelectorValue(selector) {
 	return selector.value === '' ? null : selector.value;
@@ -678,7 +424,8 @@ export function renderOption(template, source, context) {
 }
 
 /**
- * Creates a selector with default options configured
+ * Creates a selector of a given type
+ * configured for its level and selected value, if any
  * 
  * @param {number} level
  * @param {string} selectedId
@@ -731,6 +478,25 @@ export function renderSelector(
 		menu.append(renderOption(template, item.source, context));
 	}
 
+	const getControlContent = () => selector.value ?
+		template.applyDescription?.({
+			...extraContext,
+			level,
+			id: selector.value,
+			selectedId: selector.value
+		}) : null;
+
+	const getOptionContent = option =>
+		template.applyDescription?.({
+			...extraContext,
+			level,
+			id: option.value,
+			selectedId: selector.value
+		});
+
+	infoSources.set(control, getControlContent);
+	infoSources.set(menu, getOptionContent);
+
 	// handle user making a new selection
 	menu.addEventListener('click', event => {
 		const option = event.target.closest('.selector-option');
@@ -762,38 +528,6 @@ export function renderSelector(
 		if (!selector.contains(event.relatedTarget) &&
 			!menu.contains(event.relatedTarget))
 			setSelectorOpen(selector, false);
-	});
-
-	// option descriptions
-	menu.addEventListener('mouseover', event => {
-		const option = event.target.closest?.('.selector-option');
-		if (option && menu.contains(option))
-			showOptionInfo(option, template, {
-				...extraContext, level, id: option.value,
-				selectedId: selector.value
-			});
-	});
-	menu.addEventListener('mouseout', event => {
-		if (!menu.contains(event.relatedTarget))
-			scheduleInfoBubbleHide();
-	});
-	menu.addEventListener(
-		'scroll',
-		hideInfoBubble,
-		{ passive: true }
-	);
-
-	// active selection description
-	control.addEventListener('mouseover', event => {
-		if (selector.value)
-			showOptionInfo(selector, template, {
-				...extraContext, level, id: selector.value,
-				selectedId: selector.value
-			});
-	});
-	control.addEventListener('mouseout', event => {
-		if (!control.contains(event.relatedTarget))
-			scheduleInfoBubbleHide();
 	});
 
 	controlRow.append(control);
@@ -862,77 +596,246 @@ export function renderWeaponSelector(
 	return selector;
 }
 
+/**
+ * General solution to several sub-items attached to selector items:
+ * - special actions
+ * - deployable objects + characters
+ * - special ammunition
+ * 
+ * Recursively deploys sub-items into a single appendable div
+ * Uses an ancestor object as a fallback reference
+ * 
+ * @param {Object} item
+ * @param {Object} ancestor
+ * @returns {HTMLDivElement}
+ */
+function renderSubItemDescription(item, ancestor = null) {
+	// skip entirely if this item duplicates its ancestor
+	const itemDescription = item.detail ?? item.description ?? null;
+	const ancestorDescription =
+		ancestor?.detail ?? ancestor?.description ?? null;
+	if (ancestorDescription && itemDescription === ancestorDescription)
+		return null;
+
+	const container = document.createElement('div');
+
+	const name = document.createElement('h4');
+	const nameText = document.createElement('span');
+	nameText.className = 'header-text';
+	nameText.textContent = item.name ?? ancestor.name;
+	name.append(nameText);
+
+	// actions and deployables get tags alongside their name
+	if (item.activation || item.type) {
+		const type = document.createElement('span');
+		type.className = 'tags tag';
+		if (item.frequency)
+			type.textContent += `${item.frequency} `;
+		if (item.activation)
+			type.classList.add(item.activation
+				.replace(/\s+/g, '-').toLowerCase());
+		type.textContent += item.activation ?? item.type;
+		name.append(type);
+	}
+
+	const description = document.createElement('p');
+	description.innerHTML = itemDescription
+		?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
+
+	container.append(name, description);
+
+	// this sub-item may itself grant special actions: render them below it
+	for (const subItem of item.actions ?? []) {
+		const subItemDiv = renderSubItemDescription(subItem, item);
+		if (subItemDiv)
+			container.append(subItemDiv);
+	}
+
+	return container;
+}
+
+/* info bubble content renderers for complex items */
+
+function renderTalentDescription({ level, id, selectedId }) {
+	const content = [];
+
+	const rank = getTalentRank(level, id, selectedId);
+	const rankData = srcData.talents.get(id)?.ranks[rank];
+	if (!rankData)
+		return null;
+
+	const rankName = document.createElement('h3');
+	rankName.textContent = rankData.name;
+	const rankDescription = document.createElement('p');
+	rankDescription.innerHTML =
+		rankData.description?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
+
+	content.push(rankName, rankDescription);
+
+	for (const action of rankData.actions ?? [])
+		content.push(renderSubItemDescription(action, rankData));
+
+	return content;
+}
+
+function renderFrameDescription({ level, id }) {
+	const content = [];
+
+	const frame = srcData.frames.get(id);
+	if (!frame)
+		return null;
+
+	const tags = document.createElement('span');
+	tags.className = 'tags';
+	for (const type of frame.mechtype ?? []) {
+		const tag = document.createElement('div');
+		tag.className = 'tag';
+		tag.textContent = type;
+		tags.append(tag);
+	}
+	content.push(tags);
+
+	for (const trait of frame.traits ?? [])
+		content.push(renderSubItemDescription(trait));
+
+	if (frame.core_system) {
+		const coreSystem = frame.core_system;
+
+		const coreName = document.createElement('h3');
+		coreName.textContent = `Core System: ${coreSystem.name}`;
+
+		const corePowerDiv = document.createElement('div');
+		corePowerDiv.className = 'core-power-info';
+		corePowerDiv.append(coreName, renderSubItemDescription({
+			name: coreSystem.active_name,
+			activation: coreSystem.activation,
+			detail: coreSystem.active_effect,
+			actions: coreSystem.active_actions
+		}));
+
+		content.push(corePowerDiv);
+	}
+
+	return content;
+}
+
+function renderSystemDescription({ level, id }) {
+	const content = [];
+
+	const item = srcData.systems.get(id);
+	if (!item)
+		return null;
+
+	const tags = renderSystemTags(level, id, true);
+	if (tags.childElementCount) {
+		tags.style.justifyContent = 'right';
+		content.push(tags);
+	}
+
+	if (item.effect) {
+		const systemDescription = document.createElement('p');
+		systemDescription.innerHTML = item.effect
+			?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
+		content.push(systemDescription);
+	}
+
+	const subItems = [
+		...item.ammo ?? [],
+		...item.actions ?? [],
+		...item.deployables ?? []
+	];
+
+	for (const action of subItems)
+		content.push(renderSubItemDescription(action, item));
+
+	return content;
+}
+
+function renderTextAddendum(data, name) {
+	const description = (typeof data === 'string' ? data : data.detail)
+		?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
+	const textElement = document.createElement('p');
+	if (name)
+		textElement.innerHTML += `<b>${name}:</b>`; 
+	textElement.innerHTML += description;
+	return textElement;
+}
+
+function renderWeaponDescription({ level, id }) {
+	const content = [];
+
+	const item = srcData.weapons.get(id);
+
+	const header = document.createElement('h4');
+	header.textContent = `${item.mount} ${item.type}`;
+	// add weapon tags
+	const tags = renderWeaponTags(level, { id }, -1, -1, true);
+	if (tags.childElementCount) {
+		tags.style.justifyContent = 'right';
+		header.append(tags);
+	}
+	content.push(header);
+
+	for (const profile of item.profiles ?? [item]) {
+		if (profile.name !== item.name) {
+			const profileName = document.createElement('h4');
+			profileName.textContent = profile.name;
+			content.push(profileName);
+		}
+
+		if (profile.effect) {
+			const description = document.createElement('p');
+			description.innerHTML = profile.effect
+				?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
+			content.push(description);
+		}
+
+		if (profile.range) {
+			const rangeDiv = document.createElement('p');
+			rangeDiv.className = 'range';
+			for (const rangeData of profile.range) {
+				const range = document.createElement('span');
+				range.innerHTML = `<b>${rangeData.type}:</b> ${rangeData.val}`;
+				rangeDiv.append(range);
+			}
+			content.push(rangeDiv);
+		}
+
+		if (profile.damage) {
+			const damageDiv = document.createElement('p');
+			damageDiv.className = 'damage';
+			for (const damageData of profile.damage) {
+				const damage = document.createElement('span');
+				damage.innerHTML = `${damageData.val} ${damageData.type}`;
+				damageDiv.append(damage);
+			}
+			content.push(damageDiv);
+		}
+
+		if (profile.on_attack)
+			content.push(renderTextAddendum(profile.on_attack, 'On Attack'));
+		if (profile.on_hit)
+			content.push(renderTextAddendum(profile.on_hit, 'On Hit'));
+		if (profile.on_crit)
+			content.push(renderTextAddendum(profile.on_crit, 'On Crit'));
+		if (profile.on_miss)
+			content.push(renderTextAddendum(profile.on_miss, 'On Miss'));
+
+		const subItems = [
+			...profile.ammo ?? [],
+			...profile.deployables ?? []
+		];
+
+		for (const action of subItems)
+			content.push(renderSubItemDescription(action, profile));
+	}
+
+	return content;
+}
+
 window.addEventListener('resize', () => {
 	positionSelectorMenu(activeSelector);
-	hideInfoBubble();
 });
 window.addEventListener('scroll', () => {
 	positionSelectorMenu(activeSelector);
-	hideInfoBubble();
 });
-
-function positionOptionInfo(option) {
-	const gap = 8;
-	const margin = 8;
-	const optionRect = option.getBoundingClientRect();
-	const avoidRect = option.closest('.selector-menu')?.getBoundingClientRect()
-		?? optionRect;
-	const bubbleRect = infoBubble.getBoundingClientRect();
-	const right = avoidRect.right + gap;
-	const left = avoidRect.left - bubbleRect.width - gap;
-	let x;
-	let y;
-
-	const fitsToLeft = left >= margin;
-	const fitsToRight = right + bubbleRect.width <= window.innerWidth - margin;
-
-	if (fitsToLeft || fitsToRight) {
-		x = fitsToLeft ? left : right;
-		y = Math.max(margin, Math.min(optionRect.top,
-			window.innerHeight - bubbleRect.height - margin));
-	}
-	else {
-		// neither side fits: place the bubble outside the menu vertically
-		x = Math.max(margin, Math.min(optionRect.left,
-			window.innerWidth - bubbleRect.width - margin));
-
-		const below = window.innerHeight - margin - avoidRect.bottom - gap;
-		const above = avoidRect.top - gap - margin;
-
-		if (below >= bubbleRect.height)
-			y = avoidRect.bottom + gap;
-		else if (above >= bubbleRect.height)
-			y = avoidRect.top - gap - bubbleRect.height;
-
-		else {
-			// still no suitable space: investigate resizing the bubble
-			// below normal minimum constraints
-			const placeBelow = below >= above;
-			const available = Math.max(below, above);
-			if (available < 50) {
-				// no space suitable for any bubble: just hide it
-				infoBubble.hidden = true;
-				return;
-			}
-
-			infoBubble.style.maxHeight = `${available}px`;
-			y = placeBelow ? avoidRect.bottom + gap :
-				avoidRect.top - gap - available;
-		}
-	}
-
-	infoBubble.style.left = `${x}px`;
-	infoBubble.style.top = `${y}px`;
-}
-
-function showOptionInfo(option, template, context) {
-	cancelInfoBubbleHide();
-	const info = template.applyDescription?.(context);
-	if (!info)
-		return;
-
-	infoBubble.replaceChildren(...info);
-	infoBubble.style.maxHeight = '';
-	infoBubble.hidden = false;
-	positionOptionInfo(option);
-}

@@ -8,7 +8,7 @@ import {
 	setOptionHidden,
 	setSelectorClass,
 	setSelectorOpen
-} from '../selectors.js';
+} from '../selectors/selectors.js';
 
 import {
 	isFrameIntegratedItem

@@ -36,7 +36,7 @@ import {
 	setSelectorValue,
 	setSelectorClass,
 	setOptionHidden
-} from './selectors.js';
+} from './selectors/selectors.js';
 
 import {
 	allowIncreaseHASE,

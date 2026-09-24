@@ -13,7 +13,7 @@ import {
 import {
 	SELECT_TEMPLATE,
 	renderSelector
-} from './selectors.js';
+} from './selectors/selectors.js';
 
 import {
 	renderAttachmentsMenu,

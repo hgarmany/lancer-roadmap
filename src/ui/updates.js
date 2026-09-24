@@ -21,7 +21,7 @@ import {
 import {
 	setSelectorClass,
 	SELECT_TEMPLATE
-} from './selectors.js';
+} from './selectors/selectors.js';
 
 import {
 	renderAttachmentsMenu,

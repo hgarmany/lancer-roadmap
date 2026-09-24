@@ -1,6 +1,6 @@
 import {
 	setSelectorOpen
-} from '../selectors.js';
+} from '../selectors/selectors.js';
 
 const modalLayer = document.getElementById('modal-layer');
 const modalDialog = document.getElementById('modal-dialog');

@@ -810,6 +810,11 @@ select {
 	z-index: 10;
 }
 
+.core-power-info {
+	border-top: 0.25rem dotted var(--text-muted);
+	margin-top: 1rem;
+}
+
 .range,
 .damage {
 	display: flex;
@@ -824,6 +829,10 @@ select {
 #selector-info-bubble h4 {
 	display: flex;
 	margin-bottom: -0.5rem;
+}
+
+#selector-info-bubble h4 .header-text {
+	border-bottom: 0.1rem solid var(--text-muted);
 }
 
 #selector-info-bubble h4 .tags {
@@ -1316,7 +1325,7 @@ select {
 
 	display: flex;
 	flex-direction: column;
-	max-height: calc(100vh - 2rem);
+	max-height: calc(100vh - 5rem);
 	width: min(60rem, calc(100vw - 2rem));
 }
 
