@@ -1,10 +1,14 @@
 // data/roadmap.js
 
 import {
+	srcData
+} from './loader.js';
+
+import {
 	ATTACHMENT_ID,
 	getEligibleAttachments,
 	getUnusedAttachments
-} from "../rules/attachments";
+} from '../rules/attachments';
 
 const MAX_LICENSE_LEVEL = 12;
 
@@ -25,9 +29,9 @@ export let roadmap = {};
 function getChoiceLimits(level) {
 	if (level === 0) {
 		return {
-			skillTriggers: 4,
-			talents: 3,
-			mechSkills: 2
+			skillTriggers: srcData.rules.minimum_pilot_skills,
+			talents: srcData.rules.minimum_pilot_talents,
+			mechSkills: srcData.rules.minimum_mech_skills
 		};
 	}
 

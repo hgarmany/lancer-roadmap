@@ -1,8 +1,8 @@
 // rules/licenses.js
 
 import {
-	MAX_LICENSE_RANK
-} from '../constants.js';
+	srcData
+} from '../data/loader.js';
 
 import {
 	cumulativeCatalog
@@ -33,6 +33,10 @@ export function getLicenseRank(level, id, selectedId = null) {
  * @returns {boolean}
  */
 export function isLicenseEligible(level, id, selectedId = null) {
+	if (!id)
+		return true;
+
 	// licenses limited by total rank
-	return getLicenseRank(level, id, selectedId) < MAX_LICENSE_RANK;
+	return getLicenseRank(level, id, selectedId) <
+		srcData.licenses.get(id)?.items.length;
 }

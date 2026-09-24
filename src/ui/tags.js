@@ -215,7 +215,7 @@ function tryAITag(tags, item) {
 
 	const tag = document.createElement('div');
 	tag.className = 'tag ai';
-	tag.textContent = `AI`;
+	tag.textContent = 'AI';
 	tags.append(tag);
 }
 
@@ -225,7 +225,7 @@ function tryExoticTag(tags, item) {
 
 	const tag = document.createElement('div');
 	tag.className = 'tag exotic';
-	tag.textContent = `Exotic`;
+	tag.textContent = 'Exotic';
 	tags.append(tag);
 }
 
@@ -258,6 +258,16 @@ function trySPTag(tags, item) {
 	tag.className = 'tag';
 	tag.textContent = `${item.sp} SP`;
 	tags.append(tag);
+}
+
+export function tryInnateTags(tags, item) {
+	for (const tag of item?.tags ?? []) {
+		const tagPill = document.createElement('div');
+		tagPill.className = 'tag';
+		let text = srcData.tags.get(tag.id)?.name;
+		tagPill.textContent = text.replace('{VAL}', tag.val ?? '');
+		tags.append(tagPill);
+	}
 }
 
 export function renderMountTags(level, attachments, mount) {
@@ -343,6 +353,9 @@ export function renderWeaponTags(level, weapon, mountIdx, slotIdx, doSP) {
 			tags.append(tag);
 		}
 	}
+
+	if (mountIdx < 0)
+		tryInnateTags(tags, srcWeapon);
 
 	tryAITag(tags, srcWeapon);
 	tryExoticTag(tags, srcWeapon);

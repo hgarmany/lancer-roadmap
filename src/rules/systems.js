@@ -26,17 +26,6 @@ const activeFrame = cumulativeCatalog.activeFrame;
 const stats = cumulativeCatalog.stats;
 
 /**
- * Get whether a system has a given tag
- * 
- * @param {string} id
- * @param {string} tagId
- * @returns {boolean}
- */
-export function doesSystemHaveTag(id, tagId) {
-	return doesItemHaveTag(srcData.systems.get(id), tagId);
-}
-
-/**
  * Get the bonus a system adds to the AI cap
  * Defaults to 0 for non-bonus systems
  * 

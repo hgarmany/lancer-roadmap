@@ -12,8 +12,7 @@ import {
 import {
 	STAT_DEFINITIONS,
 	MECH_STAT_IDS,
-	DISPLAYED_MECH_STAT_IDS,
-	MAX_FRAME_SIZE
+	DISPLAYED_MECH_STAT_IDS
 } from '../constants.js';
 
 /**
@@ -294,7 +293,7 @@ export function calculateMechStats(catalog, level) {
 			stats['ai_budget'] += modifier.value;
 	}
 
-	stats.size = Math.min(MAX_FRAME_SIZE, stats.size);
+	stats.size = Math.min(srcData.rules.max_frame_size, stats.size);
 
 	catalog.stats[level] = stats;
 

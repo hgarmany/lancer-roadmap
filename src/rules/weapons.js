@@ -80,17 +80,6 @@ export const MOUNT_SLOTS = Object.freeze({
 });
 
 /**
- * Get whether a weapon has a given tag
- * 
- * @param {string} id
- * @param {string} tagId
- * @returns {boolean}
- */
-export function doesWeaponHaveTag(id, tagId) {
-	return doesItemHaveTag(srcData.weapons.get(id), tagId);
-}
-
-/**
  * Get the number of uses a limited weapon has
  * Non-limited weapons return 0
  * 
@@ -450,7 +439,7 @@ export function isWeaponEligible(
 
 	const candidate = srcData.weapons.get(id);
 	const mounts = getEffectiveMounts(level);
-	const isExotic = doesWeaponHaveTag(id, TAGS.EXOTIC);
+	const isExotic = doesItemHaveTag(srcData.weapons.get(id), TAGS.EXOTIC);
 
 	// simple rejection conditions
 	if (!candidate ||
@@ -478,7 +467,7 @@ export function isWeaponEligible(
 	}
 	
 	// check for uniques, reject unique weapons already installed
-	if (doesWeaponHaveTag(id, TAGS.UNIQUE) &&
+	if (doesItemHaveTag(srcData.weapons.get(id), TAGS.UNIQUE) &&
 		id !== selectedId &&
 		mounts.flatMap(mount => mount.weapons)
 			.some(weapon => weapon.id === id))

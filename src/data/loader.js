@@ -42,7 +42,9 @@ const LCP_COLLECTIONS = Object.freeze([
 	'frames',
 	'weapons',
 	'systems',
-	'mods'
+	'mods',
+	'tags',
+	'rules'
 ]);
 
 export const srcData = {};
@@ -303,6 +305,8 @@ export function loadSourceData() {
 	cleanLicenseIds(srcData.systems);
 
 	srcData.mods = normalizeById(mergedData.mods);
+	srcData.tags = normalizeById(mergedData.tags);
+	srcData.rules = { ...mergedData.rules[0] };
 
 	console.log(srcData);
 }

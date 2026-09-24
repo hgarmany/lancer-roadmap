@@ -6,6 +6,10 @@
  */
 
 import {
+	srcData
+} from '../data/loader.js';
+
+import {
 	roadmap,
 	getEffectiveSystems
 } from '../data/roadmap.js';
@@ -13,10 +17,6 @@ import {
 import {
 	cumulativeCatalog
 } from '../data/cumulativeCatalog.js';
-
-import {
-	MAX_HASE_RANK
-} from '../constants.js';
 
 import {
 	setStatValue,
@@ -218,7 +218,7 @@ export function refreshHexes(level, id) {
 
 		if (hexId === id) {
 			const value = cumulativeCatalog.hase[level].get(id);
-			hex.classList.toggle('error', value > MAX_HASE_RANK);
+			hex.classList.toggle('error', value > srcData.rules.max_hase);
 			hex.children[1].textContent = value ?? 0;
 		}
 

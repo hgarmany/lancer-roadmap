@@ -826,15 +826,6 @@ select {
 	margin-top: 0;
 }
 
-#selector-info-bubble h4 {
-	display: flex;
-	margin-bottom: -0.5rem;
-}
-
-#selector-info-bubble h4 .tags {
-	margin-left: 0.5rem;
-}
-
 #selector-info-bubble .indent {
 	margin-left: 1rem;
 }

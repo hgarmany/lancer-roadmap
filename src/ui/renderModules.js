@@ -20,7 +20,6 @@ import {
 import {
 	STAT_DEFINITIONS,
 	DISPLAYED_MECH_STAT_IDS,
-	MAX_HASE_RANK,
 	HASE_MAP
 } from '../constants.js';
 
@@ -167,7 +166,7 @@ export function renderHexStat(level, id) {
 
 	const hex = document.createElement('div');
 	hex.className = 'hex';
-	hex.classList.toggle('error', value > MAX_HASE_RANK);
+	hex.classList.toggle('error', value > srcData.rules.max_hase);
 	hex.dataset.skillId = id;
 
 	// user increment/decrement controls

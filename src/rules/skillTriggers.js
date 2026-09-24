@@ -1,8 +1,8 @@
 // rules/skillTriggers.js
 
 import {
-	MAX_SKILL_RANK
-} from '../constants.js';
+	srcData
+} from '../data/loader.js';
 
 import {
 	roadmap
@@ -47,5 +47,6 @@ export function isSkillTriggerEligible(level, id, selectedId = null) {
 	// skills limited by total rank
 	else
 		return (skillTriggers[level].get(id) ?? 0) <
-			((id === selectedId) ? MAX_SKILL_RANK + 1 : MAX_SKILL_RANK);
+			((id === selectedId) ? srcData.rules.max_trigger_rank + 1 :
+				srcData.rules.max_trigger_rank);
 }

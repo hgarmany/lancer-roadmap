@@ -1,8 +1,8 @@
 // rules/hase.js
 
 import {
-	MAX_HASE_RANK
-} from '../constants.js';
+	srcData
+} from '../data/loader.js';
 
 import {
 	roadmap
@@ -28,7 +28,7 @@ const haseCatalog = cumulativeCatalog.hase;
 export function allowIncreaseHASE(level, id) {
 	const haseIds = roadmap.ll[level].haseIds;
 	const skill = haseCatalog[level].get(id) ?? 0;
-	return skill < MAX_HASE_RANK &&
+	return skill < srcData.rules.max_hase &&
 		(!haseIds[0] || level === 0 && !haseIds[1]);
 }
 

@@ -15,9 +15,6 @@ import {
 } from '../../data/loader.js';
 
 import {
-	MAX_SKILL_RANK,
-	MAX_TALENT_RANK,
-	MAX_LICENSE_RANK,
 	ROMAN_NUMERALS
 } from '../../constants.js';
 
@@ -33,6 +30,7 @@ import {
 
 import {
 	applyAttachmentManager,
+	tryInnateTags,
 	renderSystemTags,
 	renderWeaponTags
 } from '../tags.js';
@@ -149,7 +147,7 @@ export const SELECT_TEMPLATE = Object.freeze({
 				return 'Select a skill trigger';
 
 			const rank = getSkillTriggerRank(level, id, selectedId);
-			const showRank = rank < MAX_SKILL_RANK;
+			const showRank = rank < srcData.rules.max_trigger_rank;
 
 			return srcData.skillTriggers.get(id)?.name +
 				(showRank ? ` ${ROMAN_NUMERALS[rank]}` : '');
@@ -179,7 +177,7 @@ export const SELECT_TEMPLATE = Object.freeze({
 				return 'Select a talent';
 
 			const rank = getTalentRank(level, id, selectedId);
-			const showRank = rank < MAX_TALENT_RANK;
+			const showRank = rank < srcData.talents.get(id)?.ranks.length;
 
 			return srcData.talents.get(id)?.name +
 				(showRank ? ` ${ROMAN_NUMERALS[rank]}` : '');
@@ -213,7 +211,7 @@ export const SELECT_TEMPLATE = Object.freeze({
 				return 'Select a license';
 
 			const rank = level ? getLicenseRank(level, id, selectedId) : 0;
-			const showRank = rank < MAX_LICENSE_RANK;
+			const showRank = rank < srcData.licenses.get(id)?.items.length;
 
 			return srcData.licenses.get(id)?.name +
 				(showRank ? ` ${ROMAN_NUMERALS[rank]}` : '');
@@ -872,19 +870,24 @@ function renderWeaponDescription({ level, id }) {
 
 	const header = document.createElement('h4');
 	header.textContent = `${item.mount} ${item.type}`;
+	content.push(header);
+
 	// add weapon tags
 	const tags = renderWeaponTags(level, { id }, -1, -1, true);
-	if (tags.childElementCount) {
-		tags.style.justifyContent = 'right';
-		header.append(tags);
-	}
-	content.push(header);
+	if (tags.childElementCount)
+		content.push(tags);
 
 	for (const profile of item.profiles ?? [item]) {
 		if (profile.name !== item.name) {
 			const profileName = document.createElement('h4');
 			profileName.textContent = profile.name;
 			content.push(profileName);
+
+			const profileTags = document.createElement('div');
+			profileTags.className = 'tags';
+			tryInnateTags(profileTags, profile);
+			if (profileTags.childElementCount)
+				content.push(profileTags);
 		}
 
 		if (profile.effect) {

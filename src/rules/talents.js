@@ -1,16 +1,13 @@
 // rules/talents.js
 
 import {
-	MAX_TALENT_RANK
-} from '../constants.js';
-
-import {
 	roadmap
 } from '../data/roadmap.js';
 
 import {
 	cumulativeCatalog
 } from '../data/cumulativeCatalog.js';
+import { srcData } from '../data/loader.js';
 
 const talents = cumulativeCatalog.talents;
 
@@ -46,5 +43,6 @@ export function isTalentEligible(level, id, selectedId = null) {
 			!roadmap.ll[0].talentIds.includes(id);
 	// talents limited by total rank
 	else
-		return getTalentRank(level, id, selectedId) < MAX_TALENT_RANK;
+		return getTalentRank(level, id, selectedId) <
+			srcData.talents.get(id)?.ranks.length;
 }
