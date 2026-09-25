@@ -708,7 +708,8 @@ function renderSubItemDescription(item, ancestor = null) {
 			if (item.activation)
 				type.classList.add(item.activation
 					.replace(/\s+/g, '-').toLowerCase());
-			type.textContent += item.activation ?? item.type;
+			if (item?.activation !== 'None')
+				type.textContent += item.activation ?? item.type;
 			name.append(type);
 		}
 
@@ -883,11 +884,13 @@ function renderWeaponDescription({ level, id }) {
 			profileName.textContent = profile.name;
 			content.push(profileName);
 
-			const profileTags = document.createElement('div');
-			profileTags.className = 'tags';
-			tryInnateTags(profileTags, profile);
-			if (profileTags.childElementCount)
+			if (profile.tags) {
+				const profileTags = document.createElement('div');
+				profileTags.className = 'tags';
+
+				tryInnateTags(profileTags, profile, false);
 				content.push(profileTags);
+			}
 		}
 
 		if (profile.effect) {

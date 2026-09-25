@@ -30,6 +30,8 @@ import {
 	getItemNumUses
 } from '../rules/installsCommon.js';
 
+const MAJOR_TAGS = [TAGS.UNIQUE, TAGS.AI, TAGS.LIMITED, TAGS.EXOTIC];
+
 export const ATTACHMENT_TRANSFER_TYPE = 'application/x-lancer-attachment';
 
 function setAttachmentTransferData(event, level, attachmentData) {
@@ -209,47 +211,6 @@ export function renderAttachmentsMenu(level) {
 	return menu;
 }
 
-function tryAITag(tags, item) {
-	if (!doesItemHaveTag(item, TAGS.AI))
-		return;
-
-	const tag = document.createElement('div');
-	tag.className = 'tag ai';
-	tag.textContent = 'AI';
-	tags.append(tag);
-}
-
-function tryExoticTag(tags, item) {
-	if (!doesItemHaveTag(item, TAGS.EXOTIC))
-		return;
-
-	const tag = document.createElement('div');
-	tag.className = 'tag exotic';
-	tag.textContent = 'Exotic';
-	tags.append(tag);
-}
-
-function tryLimitedTag(tags, item, level) {
-	const limited = getItemNumUses(level, item);
-	if (!limited)
-		return;
-
-	const tag = document.createElement('div');
-	tag.className = 'tag limited';
-	tag.textContent = `Limited ${limited}`;
-	tags.append(tag);
-}
-
-function tryUniqueTag(tags, item, level) {
-	if (!doesItemHaveTag(item, TAGS.UNIQUE))
-		return;
-
-	const tag = document.createElement('div');
-	tag.className = 'tag unique';
-	tag.textContent = 'Unique';
-	tags.append(tag);
-}
-
 function trySPTag(tags, item) {
 	if (!item?.sp)
 		return;
@@ -260,14 +221,28 @@ function trySPTag(tags, item) {
 	tags.append(tag);
 }
 
-export function tryInnateTags(tags, item) {
+/**
+ * Add all available and valid tags for a given piece of equipment
+ * to the supplied tag container
+ * 
+ * @param {HTMLDivElement} tags 
+ * @param {Object} item 
+ * @param {boolean} onlyMajorTags 
+ */
+export function tryInnateTags(tags, item, onlyMajorTags = true) {
 	for (const tag of item?.tags ?? []) {
+		if (onlyMajorTags && !MAJOR_TAGS.includes(tag.id))
+			continue;
+
 		const tagPill = document.createElement('div');
-		tagPill.className = 'tag';
+		tagPill.className = `tag ${tag.id.replace('_', '-')}`;
 		let text = srcData.tags.get(tag.id)?.name;
 		tagPill.textContent = text.replace('{VAL}', tag.val ?? '');
 		tags.append(tagPill);
 	}
+
+	if (!onlyMajorTags)
+		trySPTag(tags, item);
 }
 
 export function renderMountTags(level, attachments, mount) {
@@ -323,7 +298,7 @@ export function renderMountTags(level, attachments, mount) {
 	return tags;
 }
 
-export function renderWeaponTags(level, weapon, mountIdx, slotIdx, doSP) {
+export function renderWeaponTags(level, weapon, mountIdx, slotIdx, doAll) {
 	const srcWeapon = srcData.weapons.get(weapon?.id);
 
 	const tags = document.createElement('div');
@@ -354,32 +329,19 @@ export function renderWeaponTags(level, weapon, mountIdx, slotIdx, doSP) {
 		}
 	}
 
-	if (mountIdx < 0)
-		tryInnateTags(tags, srcWeapon);
-
-	tryAITag(tags, srcWeapon);
-	tryExoticTag(tags, srcWeapon);
-	tryLimitedTag(tags, srcWeapon, level);
-	tryUniqueTag(tags, srcWeapon);
-	if (doSP)
-		trySPTag(tags, srcWeapon);
+	tryInnateTags(tags, srcWeapon, !doAll);
 
 	tags.style.display = tags.children.length ? 'flex' : 'none';
 	return tags;
 }
 
-export function renderSystemTags(level, systemId, doSP) {
+export function renderSystemTags(level, systemId, doAll) {
 	const system = srcData.systems.get(systemId);
 
 	const tags = document.createElement('div');
 	tags.className = 'tags';
 
-	tryAITag(tags, system);
-	tryExoticTag(tags, system);
-	tryLimitedTag(tags, system, level);
-	tryUniqueTag(tags, system);
-	if (doSP)
-		trySPTag(tags, system);
+	tryInnateTags(tags, system, !doAll);
 
 	tags.style.display = tags.children.length ? 'flex' : 'none';
 	return tags;

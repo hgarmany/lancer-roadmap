@@ -35,6 +35,13 @@ const MAX_LCP_BYTES = 50 * 1024 * 1024;
 const MAX_LCP_FILE_COUNT = 20;
 const MAX_LCP_ITEM_COUNT = 200;
 
+const TAG_ORDER = Object.freeze({
+	'tg_unique': 0,
+	'tg_ai': 1,
+	'tg_limited': 2,
+	'tg_exotic': 3
+});
+
 const LCP_COLLECTIONS = Object.freeze([
 	'skills',
 	'talents',
@@ -75,6 +82,45 @@ function normalizeById(dataset) {
 	return new Map(normalizeCollection(dataset)
 		.filter(item => typeof item.id === 'string' && item.id)
 		.map(({ id, ...item }) => [id, item]));
+}
+
+/**
+ * Sort a list of tags such that major tags appear in a
+ * consistent order after all other tags
+ * 
+ * @param {Array<Object>} tags 
+ * @returns {number}
+ */
+function sortTags(tags) {
+	return [...tags].sort((a, b) => {
+		const priorityA = TAG_ORDER[a.id];
+		const priorityB = TAG_ORDER[b.id];
+
+		if (priorityA === undefined)
+			return priorityB === undefined ? 0 : -1;
+		if (priorityB === undefined)
+			return 1;
+		return priorityA - priorityB;
+	});
+}
+
+/**
+ * Re-order all tags in a dataset's items or sub-items to a standard order
+ * 
+ * @param {Map<string, Object>} dataset 
+ */
+function sortEquipmentTags(dataset) {
+	for (const item of dataset.values()) {
+		if (item.tags)
+			item.tags = sortTags(item.tags);
+
+		if (item.profiles) {
+			item.profiles = item.profiles.map(profile =>
+				Array.isArray(profile.tags) ?
+					{ ...profile, tags: sortTags(profile.tags) } : profile
+			);
+		}
+	}
 }
 
 /**
@@ -300,6 +346,8 @@ export function loadSourceData() {
 		...mergedData.systems,
 		...mergedData.mods
 	]);
+	sortEquipmentTags(srcData.weapons);
+	sortEquipmentTags(srcData.systems);
 
 	cleanLicenseIds(srcData.weapons);
 	cleanLicenseIds(srcData.systems);

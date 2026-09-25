@@ -19,7 +19,7 @@ export function getLicenses(gameData) {
 
 	for (const frame of gameData.frames) {
 		const id = frame.license_id;
-		if (!licenses.get(id) && !excludeSources.includes(frame.source)) {
+		if (id && !licenses.has(id) && !excludeSources.includes(frame.source)) {
 			const licenseItems = [
 				...gameData.systems,
 				...gameData.mods,

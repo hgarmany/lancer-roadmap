@@ -826,6 +826,14 @@ select {
 	margin-top: 0;
 }
 
+#selector-info-bubble h4 {
+	display: flex;
+}
+
+#selector-info-bubble h4 .tags {
+	margin-left: 0.5rem;
+}
+
 #selector-info-bubble .indent {
 	margin-left: 1rem;
 }
@@ -1107,6 +1115,7 @@ select {
 .mount-tags,
 .tags {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 0.25rem;
 }
 
@@ -1118,6 +1127,7 @@ select {
 
 .tag {
 	position: relative;
+	height: min-content;
 	width: min-content;
 	white-space: nowrap;
 	padding: 0.1rem 0.5rem;
@@ -1134,28 +1144,25 @@ select {
 	user-select: none;
 }
 
-.limited {
+.tg-limited {
 	border-color: color-mix(in srgb, var(--limited) 25%, var(--border));
 	background-color: color-mix(in srgb, var(--limited) 25%, var(--surface));
 	color: color-mix(in srgb, var(--limited) 25%, var(--border));
 }
 
-.unique,
-.tag.unique {
+.tg-unique {
 	border-color: var(--unique);
 	background-color: color-mix(in srgb, var(--unique) 25%, var(--surface));
 	color: var(--unique);
 }
 
-.exotic,
-.tag.exotic {
+.tg-exotic {
 	border-color: var(--exotic);
 	background-color: color-mix(in srgb, var(--exotic) 25%, var(--surface));
 	color: var(--exotic);
 }
 
-.ai,
-.tag.ai {
+.tg-ai {
 	border-color: var(--ai);
 	background-color: color-mix(in srgb, var(--ai) 25%, var(--surface));
 	color: var(--ai);
