@@ -31,7 +31,7 @@ html[data-theme="gms-light"] {
 	--text-muted: #666666;
 	--border: #212121;
 	--primary: #991e2a;
-	--accent: #c28200;
+	--accent: #c29b00;
 	--focus: #1e998d;
 	--error: #ae2835;
 	--limited: #b67500;
@@ -1243,10 +1243,6 @@ select {
 	align-items: center;
 	gap: 0.25rem;
 	cursor: grab;
-
-	border-color: var(--tag-color);
-	background-color: color-mix(in srgb, var(--tag-color) 16%, var(--surface));
-	color: var(--tag-color);
 }
 
 .mod-tag:active,

@@ -459,11 +459,6 @@ export function renderBudgetPill(level) {
 export function writeBuild(level) {
 	const frame = srcData.frames.get(getEffectiveFrameId(level));
 	
-	const talents = [...cumulativeCatalog.talents[level].entries()]
-		.map(([id, rank]) => {
-			const talent = srcData.talents.get(id);
-			return `${talent.name} ${rank}`;
-		}).join(', ');
 	const licenses = [...cumulativeCatalog.licenses[level].entries()]
 		.map(([id, rank]) => {
 			const license = srcData.licenses.get(id);
@@ -474,29 +469,82 @@ export function writeBuild(level) {
 			const coreBonus = srcData.coreBonuses.get(id);
 			return `${coreBonus.name}`;
 		}).join(', ');
+	const talents = [...cumulativeCatalog.talents[level].entries()]
+		.map(([id, rank]) => {
+			const talent = srcData.talents.get(id);
+			return `${talent.name} ${rank}`;
+		}).join(', ');
 
 	// stats
+	const haseMap = cumulativeCatalog.hase[level];
+	const statMap = cumulativeCatalog.stats[level];
 
+	// all armament data: mounts, weapons, mods
 	const mounts = getEffectiveMounts(level).map(mount => {
 		let renderMount = false;
 		const mountName = mount.integrated ? 'Integrated' : mount.type;
-		const attachments = mount.attachments ?
-			`[${mount.attachments.join(', ')}] ` : '';
-		const weapons = mount.weapons.filter(weapon => weapon?.id)
-			.map(weapon => srcData.weapons.get(weapon.id).name).join(', ');
 		
-		return `${mountName} Mount: ${attachments}${weapons}`;
+		// individual weapons
+		const weapons = mount.weapons.filter(weapon => weapon?.id)
+			.map(weapon => {
+				let weaponName = srcData.weapons.get(weapon.id).name;
+				// apply any weapon attachments
+				if (weapon.attachments?.[0])
+					weaponName += ` (${weapon.attachments.map(attachment => {
+						if (cumulativeCatalog.coreBonuses[level]
+							.includes(attachment))
+							return srcData.coreBonuses.get(attachment).name;
+						return srcData.mods.get(attachment).name;
+					}).join(', ')})`;
+				return weaponName;
+			}).join(', ');
+
+		// apply any mount attachments
+		let attachments = '';
+		if (mount.attachments) {
+			if (mount.attachments?.[0] === ATTACHMENT_ID.SUPERHEAVY_BRACING)
+				attachments = 'SUPERHEAVY WEAPON BRACING';
+			else
+				attachments = ' // ' + mount.attachments.map(attachment =>
+					srcData.coreBonuses.get(attachment).name).join(', ');
+		}
+		
+		return `${mountName} Mount: ${weapons}${attachments}`;
 	}).join('\n  ');
 
+	// system list
 	const systems = getEffectiveSystems(level)
 		.map(system => srcData.systems.get(system.id).name).join(', ');
 
-
+	// construct plaintext build scheme
 	let out = `-- ${frame.source} ${frame.name} @ LL${level} --\n\n`;
 	if (licenses)
 		out += `[ LICENSES ]\n  ${licenses}\n`;
 	if (coreBonuses)
 		out += `[ CORE BONUSES ]\n  ${coreBonuses}\n`;
+	if (talents)
+		out += `[ TALENTS ]\n  ${talents}\n`;
+
+	out += '[ STATS ]\n  ' +
+		`HULL:${haseMap.get('hull') ?? 0} ` +
+		`AGI:${haseMap.get('agility') ?? 0} ` +
+		`SYS:${haseMap.get('systems') ?? 0} ` +
+		`ENGI:${haseMap.get('engineering') ?? 0}\n  ` +
+		'STRUCTURE:4 ' +
+		`HP:${statMap.hp} ` +
+		`ARMOR:${statMap.armor}\n  ` +
+		'STRESS:4 ' +
+		`HEATCAP:${statMap.heatcap} ` +
+		`REPAIR:${statMap.repcap}\n  ` +
+		`ATK BONUS:${Math.ceil(level / 2)} ` +
+		`TECH ATK:${statMap.tech_attack} ` +
+		`LTD BONUS:${statMap.limited_bonus}\n  ` +
+		`SPD:${statMap.speed} ` +
+		`EVA:${statMap.evasion} ` +
+		`EDEF:${statMap.edef} ` +
+		`SENS:${statMap.sensor_range} ` +
+		`SAVE:${statMap.save}\n`;
+
 	if (mounts)
 		out += `[ WEAPONS ]\n  ${mounts}\n`;
 	if (systems)
