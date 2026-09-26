@@ -10,6 +10,7 @@ import {
 } from '../data/loader.js';
 
 import {
+	getEffectiveSystems,
 	roadmap
 } from '../data/roadmap.js';
 
@@ -51,10 +52,15 @@ import {
 } from '../rules/hase.js';
 
 import {
+	getEffectiveFrameId
+} from '../rules/frames.js';
+
+import {
 	didStatWorsen
 } from '../rules/stats.js';
 
 import {
+	ATTACHMENT_ID,
 	getEligibleAttachments
 } from '../rules/attachments.js';
 
@@ -441,4 +447,60 @@ export function renderBudgetPill(level) {
 	budgetPill.style.display = stats.sp_budget ? 'inline' : 'none';
 
 	return budgetPill;
+}
+
+/**
+ * Compiles a plain text summary of what the roadmap's mech
+ * looks like at the given level
+ * 
+ * @param {number} level
+ * @returns {string}
+ */
+export function writeBuild(level) {
+	const frame = srcData.frames.get(getEffectiveFrameId(level));
+	
+	const talents = [...cumulativeCatalog.talents[level].entries()]
+		.map(([id, rank]) => {
+			const talent = srcData.talents.get(id);
+			return `${talent.name} ${rank}`;
+		}).join(', ');
+	const licenses = [...cumulativeCatalog.licenses[level].entries()]
+		.map(([id, rank]) => {
+			const license = srcData.licenses.get(id);
+			return `${license.source} ${license.name} ${rank}`;
+		}).join(', ');
+	const coreBonuses = cumulativeCatalog.coreBonuses[level]
+		.map(id => {
+			const coreBonus = srcData.coreBonuses.get(id);
+			return `${coreBonus.name}`;
+		}).join(', ');
+
+	// stats
+
+	const mounts = getEffectiveMounts(level).map(mount => {
+		let renderMount = false;
+		const mountName = mount.integrated ? 'Integrated' : mount.type;
+		const attachments = mount.attachments ?
+			`[${mount.attachments.join(', ')}] ` : '';
+		const weapons = mount.weapons.filter(weapon => weapon?.id)
+			.map(weapon => srcData.weapons.get(weapon.id).name).join(', ');
+		
+		return `${mountName} Mount: ${attachments}${weapons}`;
+	}).join('\n  ');
+
+	const systems = getEffectiveSystems(level)
+		.map(system => srcData.systems.get(system.id).name).join(', ');
+
+
+	let out = `-- ${frame.source} ${frame.name} @ LL${level} --\n\n`;
+	if (licenses)
+		out += `[ LICENSES ]\n  ${licenses}\n`;
+	if (coreBonuses)
+		out += `[ CORE BONUSES ]\n  ${coreBonuses}\n`;
+	if (mounts)
+		out += `[ WEAPONS ]\n  ${mounts}\n`;
+	if (systems)
+		out += `[ SYSTEMS ]\n  ${systems}\n`;
+
+	return out;
 }

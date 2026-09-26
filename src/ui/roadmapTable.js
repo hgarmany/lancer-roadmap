@@ -7,7 +7,8 @@ import {
 	renderStats,
 	renderMounts,
 	renderIntegratedSystems,
-	renderBudgetPill
+	renderBudgetPill,
+	writeBuild
 } from './renderModules.js';
 
 import {
@@ -41,6 +42,15 @@ export function renderLevelLabel(level) {
 
 	if (level != 0 && level % 3 == 0)
 		label.classList.add('cb-level');
+
+	const clipboardBuild = document.createElement('button');
+	clipboardBuild.className = 'clipboard-build menu-btn';
+	clipboardBuild.title = 'Copy build stats at this level to clipboard';
+	clipboardBuild.innerHTML = '<i class="fa fa-copy"></i>';
+	clipboardBuild.addEventListener('click', () =>
+		navigator.clipboard.writeText(writeBuild(level)))
+
+	label.append(clipboardBuild);
 
 	return label;
 }

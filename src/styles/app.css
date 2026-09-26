@@ -348,7 +348,7 @@ html[data-theme="gms-dark"] .license-mark.dark {
 	pointer-events: none;
 }
 
-.menu-btn .fa {
+#menu-bar .menu-btn .fa {
 	font-size: 1rem;
 }
 
@@ -489,7 +489,7 @@ html[data-exotics=true] .exotics-name::after {
 	box-sizing: border-box;
 	width: 2.5rem;
 
-	border-radius: 0 1rem 1rem 0;
+	border-radius: 1rem 0 0 1rem;
 	background-color: var(--primary);
 
 	text-align: center;
@@ -499,12 +499,22 @@ html[data-exotics=true] .exotics-name::after {
 	font-weight: 900;
 	letter-spacing: 0.08rem;
 
-	writing-mode: tb-rl;
-	transform: rotate(-180deg);
+	writing-mode: sideways-lr;
 }
 
 .level-tab.cb-level {
 	filter: drop-shadow(-0.35rem 0 0 var(--accent));
+}
+
+.clipboard-build {
+	position: absolute;
+	top: 0.5rem;
+	left: 50%;
+	transform: translateX(-50%);
+	writing-mode: horizontal-tb;
+	cursor: copy;
+	font-size: 0.6rem;
+	padding: 0.25rem;
 }
 
 .roadmap-table-track {
