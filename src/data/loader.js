@@ -240,7 +240,7 @@ function getMergedData() {
 }
 
 /**
- * Build source data maps out of core Lancer data and installed LCPs
+ * Reboot source of truth for any rules attached to roadmap ids
  */
 export function loadSourceData() {
 	srcData = getNormalizedData(getMergedData());

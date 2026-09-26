@@ -39,7 +39,7 @@ let licenses = null;
  * @param {Object} gameData
  * @returns {Array<{id: string, name: string}>}
  */
-export function getLicenses(gameData) {
+function getLicenses(gameData) {
 	const licenses = new Map();
 
 	for (const frame of gameData.frames) {
@@ -66,37 +66,6 @@ export function getLicenses(gameData) {
 	}
 
 	return licenses;
-}
-
-/**
- * Generalized getter for obtaining
- * license information from any single feature
- * 
- * @param {Object} item
- * @returns {String}
- */
-function getLicenseName(item) {
-	if (typeof item?.license === "string")
-		return item.license.trim();
-	if (typeof item?.license?.name === "string")
-		return item.license.name.trim();
-
-	return null;
-}
-
-/**
- * Normalize character set
- * 
- * @param {String} value
- * @returns {String}
- */
-function slugify(value) {
-	return value
-		.toLowerCase()
-		.normalize("NFKD")
-		.replace(/['’‘]/g, "")
-		.replace(/[^a-z0-9]+/g, "_")
-		.replace(/^_+|_+$/g, "");
 }
 
 /**
@@ -127,20 +96,37 @@ function normalizeById(dataset) {
 		.map(({ id, ...item }) => [id, item]));
 }
 
-function sortDataset(dataset, compare) {
-	return new Map([...dataset.entries()].sort(compare));
-}
-
+/**
+ * Comparator enforcing alphabetical name sort
+ * 
+ * @param {Object} a 
+ * @param {Object} b 
+ * @returns {boolean}
+ */
 function sortByName(a, b) {
 	return a[1].name.toLowerCase() > b[1].name.toLowerCase();
 }
 
+/**
+ * Comparator enforcing manufacturer order in MANUFACTURERS
+ * 
+ * @param {Object} a 
+ * @param {Object} b 
+ * @returns {boolean}
+ */
 function sortByManufacturerAndName(a, b) {
 	if (a[1].source !== b[1].source)
 		return MANUFACTURERS[a[1].source] > MANUFACTURERS[b[1].source];
 	return sortByName(a, b);
 }
 
+/**
+ * Comparator for frames
+ * 
+ * @param {Object} a 
+ * @param {Object} b 
+ * @returns {boolean}
+ */
 function sortFrames(a, b) {
 	if (a[0] === 'mf_standard_pattern_i_everest')
 		return -1;
@@ -149,17 +135,27 @@ function sortFrames(a, b) {
 	return sortByManufacturerAndName(a, b);
 }
 
+/**
+ * Comparator for systems or weapons
+ * 
+ * @param {Object} a 
+ * @param {Object} b 
+ * @returns {boolean}
+ */
 function sortEquipment(a, b) {
+	// exotic gear comes after standard gear
 	const exoticA = a[1].tags?.some(tag => tag.id === 'tg_exotic') ?? false;
 	const exoticB = b[1].tags?.some(tag => tag.id === 'tg_exotic') ?? false;
 	if (exoticA != exoticB)
 		return exoticA;
 
+	// standard equipment follows manufacturer order in MANUFACTURERS
 	if ((a[1].source === 'GMS') != (b[1].source === 'GMS'))
 		return a[1].source === 'GMS';
 	if (a[1].source !== b[1].source)
 		return MANUFACTURERS[a[1].source] > MANUFACTURERS[b[1].source];
 
+	// sorted by license when within the same manufacturer
 	if (a[1].license_id !== b[1].license_id) {
 		const licenseA = licenses.get(a[1].license_id);
 		const licenseB = licenses.get(b[1].license_id);
@@ -170,6 +166,7 @@ function sortEquipment(a, b) {
 		return licenseA.name.toLowerCase() > licenseB.name.toLowerCase();
 	}
 
+	// for weapons: sorted by mount size when on the same license
 	if (a[1].mount !== b[1].mount)
 		return MOUNTS[a[1].mount] > MOUNTS[b[1].mount];
 
@@ -196,23 +193,8 @@ function sortTags(tags) {
 	});
 }
 
-/**
- * Re-order all tags in a dataset's items or sub-items to a standard order
- * 
- * @param {Map<string, Object>} dataset 
- */
-function sortEquipmentTags(dataset) {
-	for (const item of dataset.values()) {
-		if (item.tags)
-			item.tags = sortTags(item.tags);
-
-		if (item.profiles) {
-			item.profiles = item.profiles.map(profile =>
-				Array.isArray(profile.tags) ?
-					{ ...profile, tags: sortTags(profile.tags) } : profile
-			);
-		}
-	}
+function sortDataset(dataset, compare) {
+	return new Map([...dataset.entries()].sort(compare));
 }
 
 /**
@@ -233,6 +215,31 @@ function cleanLicenseIds(dataset) {
 	}
 }
 
+/**
+ * Re-order all tags in a dataset's items or sub-items to a standard order
+ * 
+ * @param {Map<string, Object>} dataset 
+ */
+function sortEquipmentTags(dataset) {
+	for (const item of dataset.values()) {
+		if (item.tags)
+			item.tags = sortTags(item.tags);
+
+		if (item.profiles) {
+			item.profiles = item.profiles.map(profile =>
+				Array.isArray(profile.tags) ?
+					{ ...profile, tags: sortTags(profile.tags) } : profile
+			);
+		}
+	}
+}
+
+/**
+ * Build source data maps out of core Lancer data and installed LCPs
+ * 
+ * @param {Object} data 
+ * @returns {Object}
+ */
 export function getNormalizedData(data) {
 	licenses = sortDataset(getLicenses(data), sortByManufacturerAndName);
 
