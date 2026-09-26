@@ -636,18 +636,30 @@ function renderSubItemDescription(item, ancestor = null) {
 		name.append(nameText);
 
 		// actions and deployables get tags alongside their name
-		if (item.activation || item.type) {
-			const type = document.createElement('span');
-			type.className = 'tags tag';
+		const tags = document.createElement('div');
+		tags.className = 'tags';
+
+		if (item.activation && item.activation !== 'None' || item.frequency) {
+			const action = document.createElement('span');
+			action.className = 'tag';
 			if (item.frequency && item.frequency.toLowerCase() !== 'unlimited')
-				type.textContent += `${item.frequency} `;
-			if (item.activation)
-				type.classList.add(item.activation
-					.replace(/\s+/g, '-').toLowerCase());
-			if (item?.activation !== 'None')
-				type.textContent += item.activation ?? item.type;
-			name.append(type);
+				action.textContent += `${item.frequency} `;
+			if (item.activation) {
+				action.classList.add(item.activation
+					.replace(' ', '-').toLowerCase());
+				action.textContent += item.activation;
+			}
+			tags.append(action);
 		}
+
+		if (item.type) {
+			const type = document.createElement('span');
+			type.className = 'tag';
+			type.textContent = item.type;
+			tags.append(type);
+		}
+
+		name.append(tags);
 
 		const description = document.createElement('p');
 		description.innerHTML = itemDescription
