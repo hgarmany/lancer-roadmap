@@ -5,8 +5,9 @@ import {
 } from 'fflate';
 
 import {
-	getLicenses
-} from './normalizeLicenses.js';
+	normalizeCollection,
+	getNormalizedData
+} from './normalizeData.js';
 
 import {
 	cleanRoadmapAfterLcpRemove
@@ -30,17 +31,10 @@ import {
 	renderPackageList
 } from '../ui/renderModules.js';
 
-const LCP_STORAGE_KEY = 'lancer-roadmap-lcp-packages';
+export const LCP_STORAGE_KEY = 'lancer-roadmap-lcp-packages';
 const MAX_LCP_BYTES = 50 * 1024 * 1024;
 const MAX_LCP_FILE_COUNT = 20;
 const MAX_LCP_ITEM_COUNT = 200;
-
-const TAG_ORDER = Object.freeze({
-	'tg_unique': 0,
-	'tg_ai': 1,
-	'tg_limited': 2,
-	'tg_exotic': 3
-});
 
 const LCP_COLLECTIONS = Object.freeze([
 	'skills',
@@ -54,92 +48,7 @@ const LCP_COLLECTIONS = Object.freeze([
 	'rules'
 ]);
 
-export const srcData = {};
-
-/**
- * Accept both the usual collection arrays and single-item JSON files.
- * Invalid collection values are ignored.
- *
- * @param {unknown} collection
- * @returns {Array<Object>}
- */
-function normalizeCollection(collection) {
-	if (Array.isArray(collection))
-		return collection.filter(item => item && typeof item === 'object');
-	if (collection && typeof collection === 'object')
-		return [collection];
-	return [];
-}
-
-/**
- * Build a map out of dataset entries, using the id value as a key.
- * Later entries intentionally replace earlier entries with the same ID.
- *
- * @param {any} dataset
- * @returns {Map}
- */
-function normalizeById(dataset) {
-	return new Map(normalizeCollection(dataset)
-		.filter(item => typeof item.id === 'string' && item.id)
-		.map(({ id, ...item }) => [id, item]));
-}
-
-/**
- * Sort a list of tags such that major tags appear in a
- * consistent order after all other tags
- * 
- * @param {Array<Object>} tags 
- * @returns {number}
- */
-function sortTags(tags) {
-	return [...tags].sort((a, b) => {
-		const priorityA = TAG_ORDER[a.id];
-		const priorityB = TAG_ORDER[b.id];
-
-		if (priorityA === undefined)
-			return priorityB === undefined ? 0 : -1;
-		if (priorityB === undefined)
-			return 1;
-		return priorityA - priorityB;
-	});
-}
-
-/**
- * Re-order all tags in a dataset's items or sub-items to a standard order
- * 
- * @param {Map<string, Object>} dataset 
- */
-function sortEquipmentTags(dataset) {
-	for (const item of dataset.values()) {
-		if (item.tags)
-			item.tags = sortTags(item.tags);
-
-		if (item.profiles) {
-			item.profiles = item.profiles.map(profile =>
-				Array.isArray(profile.tags) ?
-					{ ...profile, tags: sortTags(profile.tags) } : profile
-			);
-		}
-	}
-}
-
-/**
- * Some LCPs use non-standard license tagging
- * Normalize to the acceptable license id
- * 
- * @param {Map<string, Object>} dataset
- */
-function cleanLicenseIds(dataset) {
-	for (const [id, item] of dataset) {
-		item.license_id ??= item.license;
-		if (!item.license_id || !srcData.licenses.has(item.license_id)) {
-			const licenseId = srcData.licenses.values()
-				.find(license => license.name === item.license_id)?.id ?? null;
-			if (licenseId)
-				item.license_id = licenseId;
-		}
-	}
-}
+export let srcData = null;
 
 export function getStoredPackages() {
 	try {
@@ -334,28 +243,7 @@ function getMergedData() {
  * Build source data maps out of core Lancer data and installed LCPs
  */
 export function loadSourceData() {
-	const mergedData = getMergedData();
-
-	srcData.skillTriggers = normalizeById(mergedData.skills);
-	srcData.talents = normalizeById(mergedData.talents);
-	srcData.licenses = getLicenses(mergedData);
-	srcData.frames = normalizeById(mergedData.frames);
-	srcData.coreBonuses = normalizeById(mergedData.core_bonuses);
-	srcData.weapons = normalizeById(mergedData.weapons);
-	srcData.systems = normalizeById([
-		...mergedData.systems,
-		...mergedData.mods
-	]);
-	sortEquipmentTags(srcData.weapons);
-	sortEquipmentTags(srcData.systems);
-
-	cleanLicenseIds(srcData.weapons);
-	cleanLicenseIds(srcData.systems);
-
-	srcData.mods = normalizeById(mergedData.mods);
-	srcData.tags = normalizeById(mergedData.tags);
-	srcData.rules = { ...mergedData.rules[0] };
-
+	srcData = getNormalizedData(getMergedData());
 	console.log(srcData);
 }
 

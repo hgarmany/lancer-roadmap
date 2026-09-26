@@ -38,5 +38,5 @@ export function isLicenseEligible(level, id, selectedId = null) {
 
 	// licenses limited by total rank
 	return getLicenseRank(level, id, selectedId) <
-		srcData.licenses.get(id)?.items.length;
+		srcData.licenses.get(id)?.ranks.length;
 }

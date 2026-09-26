@@ -52,11 +52,6 @@ import ipsnLogoUrl from '../../assets/manufacturer-icons/IPS-N_logo.svg';
 import sscLogoUrl from '../../assets/manufacturer-icons/SSC_logo.svg';
 
 import {
-	TAGS,
-	doesItemHaveTag
-} from '../../rules/installsCommon.js';
-
-import {
 	getSkillTriggerRank,
 	isSkillTriggerEligible
 } from '../../rules/skillTriggers.js';
@@ -101,21 +96,6 @@ const selectorMenus = new WeakMap();
 let activeSelector = null;
 const selectorOverlay = document.getElementById('selector-overlay');
 
-const MANUFACTURERS = Object.freeze({
-	'GMS': 0,
-	'IPS-N': 1,
-	'SSC': 2,
-	'HORUS': 3,
-	'HA': 4
-});
-
-const MOUNTS = Object.freeze({
-	'Superheavy': 0,
-	'Heavy': 1,
-	'Main': 2,
-	'Auxiliary': 3
-});
-
 const MANUFACTURER_LOGOS = new Map([
 	['GMS', gmsLogoUrl],
 	['HA', haLogoUrl],
@@ -146,14 +126,18 @@ export const SELECT_TEMPLATE = Object.freeze({
 			if (!id)
 				return 'Select a skill trigger';
 
+			const skillTrigger = srcData.skillTriggers.get(id);
+			if (!skillTrigger)
+				return 'Invalid skill trigger';
+
 			const rank = getSkillTriggerRank(level, id, selectedId);
 			const showRank = rank < srcData.rules.max_trigger_rank;
 
-			return srcData.skillTriggers.get(id)?.name +
+			return skillTrigger.name +
 				(showRank ? ` ${ROMAN_NUMERALS[rank]}` : '');
 		},
 		applyDescription: ({ id }) =>
-			srcData.skillTriggers.get(id)?.description,
+			srcData.skillTriggers.get(id)?.description ?? null,
 		getEligibility: ({ level, id, selectedId }) =>
 			isSkillTriggerEligible(level, id, selectedId),
 		changeEvent: (selector, level) => skillTriggerUpdate(selector, level)
@@ -163,8 +147,7 @@ export const SELECT_TEMPLATE = Object.freeze({
 		title: 'Talent',
 		allowClear: true,
 		redrawLabels: true,
-		getSrcItems: () => [...srcData.talents.entries()]
-			.sort((a, b) => a[1].name.toLowerCase() > b[1].name.toLowerCase()),
+		getSrcItems: () => srcData.talents,
 		readLevel: (level) => roadmap.ll[level].talentIds,
 		write: ({ level, idx, id }) => {
 			const oldId = roadmap.ll[level].talentIds[idx];
@@ -172,16 +155,10 @@ export const SELECT_TEMPLATE = Object.freeze({
 			incrementFromLevel(cumulativeCatalog.talents, id, level);
 			decrementFromLevel(cumulativeCatalog.talents, oldId, level);
 		},
-		getLabel: ({ level, id, selectedId }) => {
-			if (!id)
-				return 'Select a talent';
-
-			const rank = getTalentRank(level, id, selectedId);
-			const showRank = rank < srcData.talents.get(id)?.ranks.length;
-
-			return srcData.talents.get(id)?.name +
-				(showRank ? ` ${ROMAN_NUMERALS[rank]}` : '');
-		},
+		getLabel: ({ level, id, selectedId }) =>
+			getLabel('talent', id, srcData.talents, {
+				func: getTalentRank, level, selectedId
+			}),
 		applyDescription: renderTalentDescription,
 		getEligibility: ({ level, id, selectedId }) =>
 			isTalentEligible(level, id, selectedId),
@@ -192,13 +169,7 @@ export const SELECT_TEMPLATE = Object.freeze({
 		title: 'License',
 		allowClear: true,
 		redrawLabels: true,
-		getSrcItems: () => [...srcData.licenses.entries()]
-			.sort((a, b) => {
-				if (a[1].source !== b[1].source)
-					return MANUFACTURERS[a[1].source] >
-						MANUFACTURERS[b[1].source];
-				return a[1].name.toLowerCase() > b[1].name.toLowerCase();
-			}),
+		getSrcItems: () => srcData.licenses,
 		readLevel: (level) => roadmap.ll[level].licenseId,
 		write: ({ level, id }) => {
 			const oldId = roadmap.ll[level].licenseId;
@@ -206,16 +177,10 @@ export const SELECT_TEMPLATE = Object.freeze({
 			incrementFromLevel(cumulativeCatalog.licenses, id, level);
 			decrementFromLevel(cumulativeCatalog.licenses, oldId, level);
 		},
-		getLabel: ({ level, id, selectedId }) => {
-			if (!id)
-				return 'Select a license';
-
-			const rank = level ? getLicenseRank(level, id, selectedId) : 0;
-			const showRank = rank < srcData.licenses.get(id)?.items.length;
-
-			return srcData.licenses.get(id)?.name +
-				(showRank ? ` ${ROMAN_NUMERALS[rank]}` : '');
-		},
+		getLabel: ({ level, id, selectedId }) =>
+			getLabel('license', id, srcData.licenses, {
+				func: getLicenseRank, level, selectedId
+			}),
 		applyDescription: renderLicenseDescription,
 		getEligibility: ({ level, id, selectedId }) =>
 			isLicenseEligible(level, id, selectedId),
@@ -225,13 +190,7 @@ export const SELECT_TEMPLATE = Object.freeze({
 		type: 'core-bonus',
 		title: 'Core Bonus',
 		allowClear: true,
-		getSrcItems: () => [...srcData.coreBonuses.entries()]
-			.sort((a, b) => {
-				if (a[1].source !== b[1].source)
-					return MANUFACTURERS[a[1].source] >
-						MANUFACTURERS[b[1].source];
-				return a[1].name.toLowerCase() > b[1].name.toLowerCase();
-			}),
+		getSrcItems: () => srcData.coreBonuses,
 		readLevel: (level) => roadmap.ll[level].coreBonusId,
 		write: ({ level, id }) => {
 			const oldId = roadmap.ll[level].coreBonusId;
@@ -239,13 +198,14 @@ export const SELECT_TEMPLATE = Object.freeze({
 			incrementFromLevel(cumulativeCatalog.coreBonuses, id, level);
 			decrementFromLevel(cumulativeCatalog.coreBonuses, oldId, level);
 		},
-		getLabel: ({ id }) => {
-			return id ? (srcData.coreBonuses.get(id)?.name ?? '') :
-				'Select a core bonus';
-		},
+		getLabel: ({ id }) => getLabel('core bonus', id, srcData.coreBonuses),
 		applyDescription: ({ id }) => {
+			const coreBonus = srcData.coreBonuses.get(id);
+			if (!coreBonus?.effect)
+				return null;
+
 			const content = document.createElement('p');
-			content.innerHTML = srcData.coreBonuses.get(id)?.effect;
+			content.innerHTML = coreBonus.effect;
 			return content;
 		},
 		getEligibility: ({ level, id, selectedId }) =>
@@ -254,17 +214,7 @@ export const SELECT_TEMPLATE = Object.freeze({
 	},
 	FRAME: {
 		type: 'frame',
-		getSrcItems: () => [...srcData.frames.entries()]
-			.sort((a, b) => {
-				if (a[0] === 'mf_standard_pattern_i_everest')
-					return -1;
-				if (a[1].license_level != b[1].license_level)
-					return a[1].license_level < b[1].license_level;
-				if (a[1].source !== b[1].source)
-					return MANUFACTURERS[a[1].source] >
-						MANUFACTURERS[b[1].source];
-				return a[1].name.toLowerCase() > b[1].name.toLowerCase();
-			}),
+		getSrcItems: () => srcData.frames,
 		readLevel: (level) => getEffectiveFrameId(level),
 		write: ({ level, id }) => {
 			roadmap.ll[level].frameId =
@@ -273,9 +223,7 @@ export const SELECT_TEMPLATE = Object.freeze({
 
 			roadmap.ll[level].mounts = null;
 		},
-		getLabel: ({ id }) => {
-			return id ? srcData.frames.get(id)?.name : null;
-		},
+		getLabel: ({ id }) => getLabel('frame', id, srcData.frames),
 		applyDescription: renderFrameDescription,
 		getEligibility: ({ level, id }) =>
 			isFrameEligible(level, id),
@@ -285,11 +233,12 @@ export const SELECT_TEMPLATE = Object.freeze({
 		type: 'weapon',
 		allowClear: true,
 		redrawLabels: true,
-		getSrcItems: () => [...srcData.weapons.entries()].sort(sortEquipment),
+		getSrcItems: () => srcData.weapons,
 		write: ({ level, mountIdx, slotIdx, id }) =>
 			setWeaponSelection(level, mountIdx, slotIdx, id),
 		getLabel: ({ id, slot = null }) => {
-			return id ? (srcData.weapons.get(id)?.name ?? '') :
+			return id ?
+				(srcData.weapons.get(id)?.name ?? 'Invalid weapon') :
 				slot?.label;
 		},
 		applyDescription: renderWeaponDescription,
@@ -301,7 +250,7 @@ export const SELECT_TEMPLATE = Object.freeze({
 		type: 'system',
 		allowClear: true,
 		redrawLabels: true,
-		getSrcItems: () => [...srcData.systems.entries()].sort(sortEquipment),
+		getSrcItems: () => srcData.systems,
 		readLevel: (level) => {
 			for (let i = level; i >= 0; i--) {
 				if (roadmap.ll[i].systems[0])
@@ -334,16 +283,31 @@ export const SELECT_TEMPLATE = Object.freeze({
 				}
 			}
 		},
-		getLabel: ({ id }) => {
-			return id ? (srcData.systems.get(id)?.name ?? '') :
-				'Select a system';
-		},
+		getLabel: ({ id }) => getLabel('system', id, srcData.systems),
 		applyDescription: renderSystemDescription,
 		getEligibility: ({ level, id, selectedId }) =>
 			isSystemEligible(level, id, selectedId),
 		changeEvent: (selector, level) => systemUpdate(selector, level)
 	}
 });
+
+function getLabel(type, id, dataset, rankContext = null) {
+	if (!id)
+		return `Select a ${type.replace('-', ' ')}`;
+
+	const item = dataset.get(id);
+	if (!item?.name)
+		return `Invalid ${type.replace('-', ' ')}`;
+
+	if (rankContext) {
+		const rank = rankContext.func(
+			rankContext.level, id, rankContext.selectedId);
+		const showRank = rank < item.ranks?.length;
+		return `${item.name} ${ROMAN_NUMERALS[rank]}`;
+	}
+
+	return item.name;
+}
 
 export function getSelectorValue(selector) {
 	return selector.value === '' ? null : selector.value;
@@ -500,7 +464,7 @@ export function renderSelector(
 
 	const value = document.createElement('span');
 	value.className = 'selector-value';
-	value.textContent = template.getLabel?.(context) ?? '';
+	value.textContent = template.getLabel?.(context);
 
 	const arrow = document.createElement('span');
 	arrow.className = 'selector-arrow';
@@ -638,34 +602,6 @@ export function renderWeaponSelector(
 	return selector;
 }
 
-function sortEquipment(a, b) {
-	const exoticA = doesItemHaveTag(a[1], TAGS.EXOTIC);
-	const exoticB = doesItemHaveTag(b[1], TAGS.EXOTIC);
-	if (exoticA != exoticB)
-		return exoticA;
-
-	if ((a[1].source === 'GMS') != (b[1].source === 'GMS'))
-		return a[1].source === 'GMS';
-	if (a[1].source !== b[1].source)
-		return MANUFACTURERS[a[1].source] >
-			MANUFACTURERS[b[1].source];
-
-	if (a[1].license_id !== b[1].license_id) {
-		const licenseA = srcData.licenses.get(a[1].license_id);
-		const licenseB = srcData.licenses.get(b[1].license_id);
-		if (!licenseA)
-			return -1;
-		if (!licenseB)
-			return 1;
-		return licenseA.name.toLowerCase() >
-			licenseB.name.toLowerCase();
-	}
-
-	if (a[1].mount !== b[1].mount)
-		return MOUNTS[a[1].mount] > MOUNTS[b[1].mount];
-
-	return a[1].name.toLowerCase() > b[1].name.toLowerCase();
-}
 
 /**
  * General solution to several sub-items attached to selector items:
@@ -703,7 +639,7 @@ function renderSubItemDescription(item, ancestor = null) {
 		if (item.activation || item.type) {
 			const type = document.createElement('span');
 			type.className = 'tags tag';
-			if (item.frequency)
+			if (item.frequency && item.frequency.toLowerCase() !== 'unlimited')
 				type.textContent += `${item.frequency} `;
 			if (item.activation)
 				type.classList.add(item.activation
@@ -735,12 +671,12 @@ function renderSubItemDescription(item, ancestor = null) {
 /* info bubble content renderers for complex items */
 
 function renderTalentDescription({ level, id, selectedId }) {
-	const content = [];
-
 	const rank = getTalentRank(level, id, selectedId);
-	const rankData = srcData.talents.get(id)?.ranks[rank];
+	const rankData = srcData.talents.get(id)?.ranks?.[rank];
 	if (!rankData)
 		return null;
+
+	const content = [];
 
 	const rankName = document.createElement('h3');
 	rankName.textContent = rankData.name;
@@ -757,13 +693,16 @@ function renderTalentDescription({ level, id, selectedId }) {
 }
 
 function renderLicenseDescription({ level, id, selectedId }) {
+	const license = srcData.licenses.get(id);
+	if (!license)
+		return null;
+
 	const content = document.createElement('p');
 
 	const rank = getLicenseRank(level, id, selectedId);
-	const licenseItems = srcData.licenses.get(id).items[rank];
-
-	for (const id of licenseItems) {
-		const item = srcData.systems.get(id) ?? srcData.weapons.get(id);
+	for (const itemId of license.ranks[rank]) {
+		const item = srcData.systems.get(itemId) ??
+			srcData.weapons.get(itemId);
 		if (item)
 			content.innerHTML += item.name + '<br>';
 	}
@@ -772,11 +711,11 @@ function renderLicenseDescription({ level, id, selectedId }) {
 }
 
 function renderFrameDescription({ level, id }) {
-	const content = [];
-
 	const frame = srcData.frames.get(id);
 	if (!frame)
 		return null;
+
+	const content = [];
 
 	const tags = document.createElement('span');
 	tags.className = 'tags';
@@ -823,11 +762,11 @@ function renderFrameDescription({ level, id }) {
 }
 
 function renderSystemDescription({ level, id }) {
-	const content = [];
-
 	const item = srcData.systems.get(id);
 	if (!item)
 		return null;
+
+	const content = [];
 
 	const tags = renderSystemTags(level, id, true);
 	if (tags.childElementCount) {
@@ -865,9 +804,11 @@ function renderTextAddendum(data, name) {
 }
 
 function renderWeaponDescription({ level, id }) {
-	const content = [];
-
 	const item = srcData.weapons.get(id);
+	if (!item)
+		return null;
+
+	const content = [];
 
 	const header = document.createElement('h4');
 	header.textContent = `${item.mount} ${item.type}`;
