@@ -49,6 +49,7 @@ const saveBtn = document.getElementById('save-btn');
 const roadmapFileInput = document.getElementById('roadmap-file');
 
 export const lcpManager = document.getElementById('lcp-manager');
+const lcpPanel = document.getElementById('lcp-panel');
 export const fileInput = document.getElementById('lcp-file');
 export const lcpStatus = document.getElementById('lcp-status');
 
@@ -73,6 +74,23 @@ function positionLevelLabels() {
 
 const levelRowResizeObserver = new ResizeObserver(positionLevelLabels);
 
+/**
+ * LCP menu shifts left to stay within the right-hand margin of the viewport
+ */
+export function positionLCPMenu() {
+	const rightMargin = 24;
+	const managerRect = lcpManager.getBoundingClientRect();
+	const panelRect = lcpPanel.getBoundingClientRect();
+
+	const maximumLeft = window.innerWidth - rightMargin -
+		managerRect.left - panelRect.width;
+	lcpPanel.style.left = `${Math.min(0, maximumLeft)}px`;
+}
+
+/**
+ * Switch on/off glow effect on either edge of the table
+ * to indicate viewport overflow
+ */
 function updateTableOverflowIndicators() {
 	const leftOverflow = roadmapContainer.scrollLeft;
 	const rightOverflow = roadmapContainer.scrollWidth -
@@ -128,6 +146,8 @@ function updateHeaderVisibility() {
 }
 
 export function configureHeader() {
+	updateHeaderVisibility();
+	
 	headerButtons?.addEventListener('click', event => {
 		const button = event.target.closest?.('button[data-id]');
 		if (!button || !event.currentTarget.contains(button))
@@ -138,13 +158,14 @@ export function configureHeader() {
 	const headerResizeObserver = new ResizeObserver(updateHeaderVisibility);
 	for (const element of [header, headerButtons, appTitle, ...licenseMarks])
 		headerResizeObserver.observe(element);
-	updateHeaderVisibility();
 }
 
 /**
  * Connect the roadmap name and max LL fields to table + roadmap data
  */
 export function configureToolMenu() {
+	window.addEventListener('resize', positionLCPMenu);
+
 	const storedExotics = localStorage.getItem('lancer-roadmap-exotics');
 	if (storedExotics !== null)
 		roadmap.allowExotics = storedExotics === 'true';

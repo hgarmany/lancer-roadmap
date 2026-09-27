@@ -1,3 +1,7 @@
+import {
+	lcpManager
+} from '../../ui/renderer.js';
+
 const lcpContent = `
 	Lancer Content Packages (LCP) are data packs originally designed for use in
 	COMP/CON, and now the de-facto standard for distributing digital copies of
@@ -16,11 +20,10 @@ export function render({ close }) {
 	content.className = 'modal-content';
 	content.innerHTML = lcpContent;
 
-	const manager = document.getElementById('lcp-manager');
 	content.querySelector('[data-action="manage"]').addEventListener('click', () => {
 		close();
-		manager.open = true;
-		manager.querySelector('summary')?.focus();
+		lcpManager.open = true;
+		lcpManager.querySelector('summary')?.focus();
 	});
 
 	return content;

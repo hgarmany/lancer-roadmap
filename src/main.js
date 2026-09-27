@@ -23,13 +23,19 @@ import {
 	configureModal
 } from './ui/modal/modal.js';
 
+configureHeader();
+
 loadSourceData();
 createDefaultRoadmap();
 
 // initialize roadmap planner
-configureHeader();
 configureToolMenu();
 configureModal();
 initializeCatalog();
 initializeRenderPipeline();
 configureLcpManager();
+
+await document.fonts.ready;
+
+document.documentElement.classList.remove('app-loading');
+document.documentElement.classList.add('app-ready');

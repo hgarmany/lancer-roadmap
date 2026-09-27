@@ -59,6 +59,38 @@ html[data-theme="gms-dark"] {
 	--ai: #64b5f6;
 }
 
+html.app-loading body > :not(#loading-greeter) {
+	opacity: 0;
+}
+
+html.app-ready body > :not(#loading-greeter) {
+	opacity: 1;
+	transition: opacity 200ms ease-out;
+}
+
+#loading-greeter {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+
+	border: 0.25rem solid var(--border);
+	border-radius: 1rem;
+	background-color: var(--surface-raised);
+	padding: 2rem;
+
+	font-size: xx-large;
+}
+
+html.app-loading #loading-greeter {
+	opacity: 1;
+	visibility: visible;
+}
+
+html.app-ready #loading-greeter {
+	visibility: hidden;
+}
+
 body {
 	margin: 0;
 	-webkit-text-size-adjust: 100%;
@@ -83,6 +115,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* all header-style text */
 
+#loading-greeter,
 h1, h2, h3, h4, h5, h6,
 .inline-header,
 #header-buttons button,
@@ -604,6 +637,7 @@ html[data-exotics=true] .exotics-name::after {
 	display: block;
 	padding: 0.25rem;
 	background-color: var(--table-header);
+	white-space: nowrap;
 }
 
 .roadmap-table thead th:not(:last-child) > span::after {
