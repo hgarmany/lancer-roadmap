@@ -48,7 +48,8 @@ function getInfoBubbleContext(target) {
 		};
 	}
 
-	const control = target.closest?.('.selector-control');
+	const control = target.closest?.(
+		'.selector-control, .custom-select-mimic');
 	const controlSource = infoSources.get(control);
 	if (control && controlSource) {
 		return {

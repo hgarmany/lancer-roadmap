@@ -1,9 +1,5 @@
 // data/normalizeLicenses.js
 
-import {
-	systemUpdate
-} from "../ui/updates";
-
 const excludeSources = [
 	'GMS'
 ];
@@ -207,8 +203,8 @@ function cleanLicenseIds(dataset) {
 	for (const [id, item] of dataset) {
 		item.license_id ??= item.license;
 		if (!item.license_id || !licenses.has(item.license_id)) {
-			const licenseId = licenses.values()
-				.find(license => license.name === item.license_id)?.id ?? null;
+			const licenseId = licenses.values().find(license =>
+				license.name === (item.license_id ?? item.variant))?.id ?? null;
 			if (licenseId)
 				item.license_id = licenseId;
 		}
@@ -243,6 +239,9 @@ function sortEquipmentTags(dataset) {
 export function getNormalizedData(data) {
 	licenses = sortDataset(getLicenses(data), sortByManufacturerAndName);
 
+	const frames = normalizeById(data.frames);
+	cleanLicenseIds(frames);
+
 	const weapons = normalizeById(data.weapons);
 	sortEquipmentTags(weapons);
 	cleanLicenseIds(weapons);
@@ -258,7 +257,7 @@ export function getNormalizedData(data) {
 		skillTriggers: normalizeById(data.skills),
 		talents: sortDataset(normalizeById(data.talents), sortByName),
 		licenses,
-		frames: sortDataset(normalizeById(data.frames), sortFrames),
+		frames: sortDataset(frames, sortFrames),
 		coreBonuses: sortDataset(
 			normalizeById(data.core_bonuses), sortByManufacturerAndName),
 		weapons: sortDataset(weapons, sortEquipment),

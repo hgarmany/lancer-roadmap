@@ -20,8 +20,7 @@ import {
 
 import {
 	setStatValue,
-	renderMount,
-	renderMounts
+	renderMount
 } from './renderModules.js';
 
 import {
@@ -32,7 +31,6 @@ import {
 import {
 	SELECT_TEMPLATE,
 	renderSelector,
-	getSelectorValue,
 	setSelectorValue,
 	setSelectorClass,
 	setOptionHidden
@@ -50,12 +48,10 @@ import {
 } from '../rules/stats.js';
 
 import {
-	hasEligibleSystem,
-	getSystemNumUses
+	hasEligibleSystem
 } from '../rules/systems.js';
 
 import {
-	getWeaponNumUses,
 	getEffectiveMounts,
 	getEffectiveMountType,
 	getMountSlots

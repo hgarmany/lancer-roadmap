@@ -13,10 +13,6 @@ import {
 } from '../data/loader.js';
 
 import {
-	MAX_MOUNT_COUNT
-} from '../constants.js';
-
-import {
 	getEffectiveFrameId
 } from './frames.js';
 
@@ -27,7 +23,6 @@ import {
 import {
 	TAGS,
 	doesItemHaveTag,
-	getItemNumUses,
 	isFrameIntegratedItem
 } from './installsCommon.js';
 import { mountTagUpdate } from '../ui/updates.js';
@@ -78,18 +73,6 @@ export const MOUNT_SLOTS = Object.freeze({
 	'Aux/Aux': Object.freeze([AUXILIARY_SLOT, AUXILIARY_SLOT]),
 	'Aux': Object.freeze([AUXILIARY_SLOT])
 });
-
-/**
- * Get the number of uses a limited weapon has
- * Non-limited weapons return 0
- * 
- * @param {number} level
- * @param {string} id
- * @returns {string}
- */
-export function getWeaponNumUses(level, id) {
-	return getItemNumUses(level, srcData.weapons.get(id));
-}
 
 /**
  * Get the mount type after special mount alterations are applied
@@ -354,7 +337,7 @@ function updateMountSlotCount(level, mount) {
 }
 
 // reset level to inherited mounts if all weapon slots are empty
-export function resetEmptyMounts(level) {
+function resetEmptyMounts(level) {
 	const activeFrame = getEffectiveFrameId(level);
 	const mounts = roadmap.ll[level].mounts;
 	if (mounts && !mounts.some(mount =>

@@ -24,11 +24,6 @@ import {
 } from './infoBubble.js';
 
 import {
-	refreshStats,
-	refreshBudgetPill
-} from '../refreshRenderModules.js';
-
-import {
 	applyAttachmentManager,
 	tryInnateTags,
 	renderSystemTags,
@@ -82,13 +77,11 @@ import {
 import {
 	isWeaponEligible,
 	setWeaponSelection,
-	deepCopyMounts,
-	resetEmptyMounts
+	deepCopyMounts
 } from '../../rules/weapons.js';
 
 import {
 	isSystemEligible,
-	hasEligibleSystem,
 	configureSystems
 } from '../../rules/systems.js';
 
@@ -403,6 +396,15 @@ export function setSelectorOpen(selector, doOpen) {
 	positionSelectorMenu(selector);
 }
 
+/**
+ * Renders an option for a selector drop-down menu
+ * Ineligible options are prepared and added but are hidden while ineligible
+ * 
+ * @param {Object} template 
+ * @param {string} source 
+ * @param {Object} context 
+ * @returns {HTMLDivElement}
+ */
 export function renderOption(template, source, context) {
 	const option = document.createElement('div');
 	option.className = 'selector-option';
@@ -639,7 +641,9 @@ function renderSubItemDescription(item, ancestor = null) {
 		const tags = document.createElement('div');
 		tags.className = 'tags';
 
-		if (item.activation && item.activation !== 'None' || item.frequency) {
+		if (!item.hide_active &&
+			(item.activation && item.activation !== 'None' || item.frequency)
+		) {
 			const action = document.createElement('span');
 			action.className = 'tag';
 			if (item.frequency && item.frequency.toLowerCase() !== 'unlimited')
@@ -660,12 +664,18 @@ function renderSubItemDescription(item, ancestor = null) {
 		}
 
 		name.append(tags);
+		container.append(name);
+
+		if (item.trigger) {
+			const trigger = document.createElement('p');
+			trigger.innerHTML = `<b>Trigger:</b> ${item.trigger}`;
+			container.append(trigger);
+		}
 
 		const description = document.createElement('p');
 		description.innerHTML = itemDescription
 			?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
-
-		container.append(name, description);
+		container.append(description);
 	}
 
 	// this sub-item may itself grant special actions: render them below it
@@ -841,7 +851,7 @@ function renderWeaponDescription({ level, id }) {
 				const profileTags = document.createElement('div');
 				profileTags.className = 'tags';
 
-				tryInnateTags(profileTags, profile, false);
+				tryInnateTags(level, profileTags, profile, false);
 				content.push(profileTags);
 			}
 		}

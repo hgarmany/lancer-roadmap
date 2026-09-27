@@ -16,7 +16,6 @@ import {
 import {
 	TAGS,
 	doesItemHaveTag,
-	getItemNumUses,
 	isFrameIntegratedItem
 } from './installsCommon.js';
 
@@ -36,18 +35,6 @@ function systemAIBonus(id) {
 	const bonus = Number(srcData.systems.get(id)?.bonuses
 		?.find(bonus => bonus.id === 'ai_cap')?.val);
 	return Number.isFinite(bonus) ? bonus : 0;
-}
-
-/**
- * Get the number of uses a limited system has
- * Non-limited systems return -1
- * 
- * @param {number} level
- * @param {string} id
- * @returns {string}
- */
-export function getSystemNumUses(level, id) {
-	return getItemNumUses(level, srcData.systems.get(id));
 }
 
 /**

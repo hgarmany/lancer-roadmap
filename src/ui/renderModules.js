@@ -30,9 +30,12 @@ import {
 
 import {
 	SELECT_TEMPLATE,
-	renderSelector,
 	renderWeaponSelector,
 } from './selectors/selectors.js';
+
+import {
+	infoSources
+} from './selectors/infoBubble.js';
 
 import {
 	applyAttachmentManager,
@@ -310,13 +313,21 @@ export function renderStats(level) {
  * Create a stand-in element that resembles
  * but does not function as a weapons selector
  * 
+ * @param {number} level
  * @param {string} id
  * @returns {HTMLDivElement}
  */
-function renderIntegratedWeaponLabel(id) {
+function renderIntegratedWeaponLabel(level, id) {
 	const label = document.createElement('div');
 	label.className = 'custom-select-mimic';
 	label.textContent = SELECT_TEMPLATE.WEAPON.getLabel({ id });
+	infoSources.set(label, () =>
+		SELECT_TEMPLATE.WEAPON.applyDescription?.({
+			level,
+			id,
+			selectedId: id
+		})
+	);
 	return label;
 }
 
@@ -361,7 +372,8 @@ export function renderMount(level, idx, data) {
 			// integrated mount w/ pseudo-selector
 			mount.classList.add('integrated');
 			mount.dataset.integrated = data.integrated;
-			const selector = renderIntegratedWeaponLabel(weapons[i]?.id);
+			const selector = renderIntegratedWeaponLabel(
+				level, weapons[i]?.id);
 			selector.dataset.mountIdx = idx;
 			selector.dataset.slotIdx = i;
 			selector.append(renderWeaponTags(level, weapons[i], idx, i));

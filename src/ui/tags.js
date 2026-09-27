@@ -25,9 +25,8 @@ import {
 } from '../rules/attachments.js';
 
 import {
-	TAGS,
-	doesItemHaveTag,
-	getItemNumUses
+	getItemNumUses,
+	TAGS
 } from '../rules/installsCommon.js';
 
 const MAJOR_TAGS = [TAGS.UNIQUE, TAGS.AI, TAGS.LIMITED, TAGS.EXOTIC];
@@ -229,7 +228,7 @@ function trySPTag(tags, item) {
  * @param {Object} item 
  * @param {boolean} onlyMajorTags 
  */
-export function tryInnateTags(tags, item, onlyMajorTags = true) {
+export function tryInnateTags(level, tags, item, onlyMajorTags = true) {
 	for (const tag of item?.tags ?? []) {
 		if (onlyMajorTags && !MAJOR_TAGS.includes(tag.id))
 			continue;
@@ -237,7 +236,10 @@ export function tryInnateTags(tags, item, onlyMajorTags = true) {
 		const tagPill = document.createElement('div');
 		tagPill.className = `tag ${tag.id.replace('_', '-')}`;
 		let text = srcData.tags.get(tag.id)?.name;
-		tagPill.textContent = text.replace('{VAL}', tag.val ?? '');
+
+		const value = tag.id === TAGS.LIMITED ?
+			getItemNumUses(level, item) : tag.val;
+		tagPill.textContent = text.replace('{VAL}', value);
 		tags.append(tagPill);
 	}
 
@@ -329,7 +331,7 @@ export function renderWeaponTags(level, weapon, mountIdx, slotIdx, doAll) {
 		}
 	}
 
-	tryInnateTags(tags, srcWeapon, !doAll);
+	tryInnateTags(level, tags, srcWeapon, !doAll);
 
 	tags.style.display = tags.children.length ? 'flex' : 'none';
 	return tags;
@@ -341,7 +343,7 @@ export function renderSystemTags(level, systemId, doAll) {
 	const tags = document.createElement('div');
 	tags.className = 'tags';
 
-	tryInnateTags(tags, system, !doAll);
+	tryInnateTags(level, tags, system, !doAll);
 
 	tags.style.display = tags.children.length ? 'flex' : 'none';
 	return tags;

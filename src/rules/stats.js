@@ -10,9 +10,7 @@ import {
 } from '../data/loader.js';
 
 import {
-	STAT_DEFINITIONS,
-	MECH_STAT_IDS,
-	DISPLAYED_MECH_STAT_IDS
+	STAT_DEFINITIONS
 } from '../constants.js';
 
 /**

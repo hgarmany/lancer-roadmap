@@ -5,10 +5,6 @@ import {
 } from './roadmap.js';
 
 import {
-	srcData
-} from './loader.js';
-
-import {
 	calculateMechStats
 } from '../rules/stats.js';
 

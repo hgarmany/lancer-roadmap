@@ -6,8 +6,7 @@ import {
 
 import {
 	ATTACHMENT_ID,
-	getEligibleAttachments,
-	getUnusedAttachments
+	getEligibleAttachments
 } from '../rules/attachments';
 
 const MAX_LICENSE_LEVEL = 12;
