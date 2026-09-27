@@ -20,7 +20,8 @@ import {
 
 import {
 	setStatValue,
-	renderMount
+	renderMount,
+	renderIntegratedSystems
 } from './renderModules.js';
 
 import {
@@ -310,6 +311,12 @@ export function refreshBudgetPill(level) {
 		`budget-total-ll-${level}`).textContent = stats.sp;
 	budgetPill.classList.toggle('error', stats.sp_budget < 0);
 	budgetPill.style.display = stats.sp_budget ? 'inline' : 'none';
+}
+
+export function refreshIntegratedSystems(level) {
+	const integratedSystems = document.getElementById(`row-ll-${level}`)
+		.querySelector('.systems-cell .systems-integrated');
+	integratedSystems.replaceWith(renderIntegratedSystems(level));
 }
 
 export function refreshElectiveSystemList(level) {

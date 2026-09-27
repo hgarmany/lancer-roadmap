@@ -33,6 +33,7 @@ import {
 	refreshHASETooltip,
 	refreshStats,
 	refreshBudgetPill,
+	refreshIntegratedSystems,
 	refreshElectiveSystemList,
 	refreshWeaponSelectors,
 	redrawMount,
@@ -152,6 +153,7 @@ export function updateHASEWaterfall(level, id, doIncrement) {
 		refreshStats(i);
 
 		refreshBudgetPill(i);
+		refreshIntegratedSystems(i);
 		refreshElectiveSystemList(i);
 	}
 
@@ -221,6 +223,7 @@ export function frameUpdate(selector, level) {
 		redrawMounts(i);
 		refreshAttachmentMenu(i);
 		refreshBudgetPill(i);
+		refreshIntegratedSystems(i);
 		refreshElectiveSystemList(i);
 
 		stopLevel++;

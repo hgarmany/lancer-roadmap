@@ -621,7 +621,7 @@ export function renderWeaponSelector(
 function renderSubItemDescription(item, ancestor = null) {
 	const container = document.createElement('div');
 
-	const itemDescription = item.detail ?? item.description ?? null;
+	const itemDescription = item?.detail ?? item?.description ?? null;
 
 	if (itemDescription) {
 		const ancestorDescription =
@@ -770,6 +770,28 @@ function renderFrameDescription({ level, id }) {
 			}));
 		}
 
+		for (const integratedId of coreSystem.integrated ?? []) {
+			const weaponElements = renderWeaponDescription({
+				level, id: integratedId });
+			const systemElements = renderSystemDescription({
+				level, id: integratedId });
+			for (const element of weaponElements ?? systemElements) {
+				element.classList.add('indent');
+				corePowerDiv.append(element);
+			}
+		}
+
+		const subItems = [
+			...coreSystem.actions ?? [],
+			...coreSystem.deployables ?? []
+		];
+
+		for (const subItem of subItems) {
+			const subItemDiv = renderSubItemDescription(subItem, coreSystem);
+			subItemDiv.classList.add('indent');
+			corePowerDiv.append(subItemDiv);
+		}
+
 		corePowerDiv.append(renderSubItemDescription({
 			name: `Active: <u>${coreSystem.active_name}</u>`,
 			activation: coreSystem.activation,
@@ -809,8 +831,8 @@ function renderSystemDescription({ level, id }) {
 		...item.deployables ?? []
 	];
 
-	for (const action of subItems)
-		content.push(renderSubItemDescription(action, item));
+	for (const subItem of subItems)
+		content.push(renderSubItemDescription(subItem, item));
 
 	return content;
 }
@@ -900,8 +922,8 @@ function renderWeaponDescription({ level, id }) {
 			...profile.deployables ?? []
 		];
 
-		for (const action of subItems)
-			content.push(renderSubItemDescription(action, profile));
+		for (const subItem of subItems)
+			content.push(renderSubItemDescription(subItem, profile));
 	}
 
 	return content;

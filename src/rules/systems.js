@@ -113,10 +113,8 @@ export function hasEligibleSystem(level) {
 
 export function getIntegratedSystemIds(level) {
 	const frame = srcData.frames.get(activeFrame[level]);
-	const integratedId = frame?.core_system.integrated ?? null;
-
-	return (integratedId && srcData.systems.get(integratedId)) ?
-		[ integratedId ] : [];
+	const integratedIds = frame?.core_system.integrated ?? null;
+	return integratedIds?.length ? integratedIds : [];
 }
 
 export function configureSystems(level) {

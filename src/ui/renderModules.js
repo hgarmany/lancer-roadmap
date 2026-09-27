@@ -421,10 +421,19 @@ export function renderIntegratedSystems(level) {
 		const system = srcData.systems.get(systemId);
 		if (system) {
 			integratedSystems.hidden = false;
-			const listing = document.createElement('span');
+			const listing = document.createElement('div');
+			listing.className = 'custom-select-mimic';
 
 			const systemLabel = document.createElement('span');
 			systemLabel.textContent = system.name ?? '';
+			
+			infoSources.set(listing, () =>
+				SELECT_TEMPLATE.SYSTEM.applyDescription?.({
+					level,
+					id: systemId,
+					selectedId: systemId
+				})
+			);
 
 			listing.append(systemLabel, renderSystemTags(level, systemId));
 			integratedSystems.append(listing);
