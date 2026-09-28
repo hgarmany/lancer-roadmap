@@ -53,7 +53,9 @@ import {
 } from '../rules/stats.js';
 
 import {
-	reconfigureMounts
+	getEffectiveMounts,
+	reconfigureMounts,
+	resetEmptyMounts
 } from '../rules/weapons.js';
 
 import {
@@ -264,42 +266,37 @@ export function weaponTagUpdate(level, mountIndexes) {
 }
 
 export function mountTagUpdate(level, mountIndices) {
-	for (let i = level; i <= roadmap.maxLevel; i++) {
-		if (i > level && roadmap.ll[i].mounts)
-			break;
-
-		refreshAttachmentMenu(i);
-		for (const mountIdx of mountIndices)
-			redrawMount(i, mountIdx);
-	}
+	refreshAttachmentMenu(level);
+	for (const mountIdx of mountIndices)
+		redrawMount(level, mountIdx);
 }
 
 export function weaponUpdate(selector, level) {
 	const template = SELECT_TEMPLATE.WEAPON;
 
 	// selection update
-	const currentLevel = Number(selector.dataset.ll);
 	const mountIdx = Number(selector.dataset.mountIdx);
 	const slotIdx = Number(selector.dataset.slotIdx);
-
 	const newId = selector.value;
 
 	// update roadmap and cumulative catalog
 	template.write({
-		level: currentLevel,
+		level,
 		mountIdx,
 		slotIdx,
 		id: newId
 	});
-	const alteredMountIndices = updateAppliedAttachments(level);
-	mountTagUpdate(currentLevel, alteredMountIndices);
+	let alteredMountIndices = updateAppliedAttachments(level);
+	if (resetEmptyMounts(level))
+		alteredMountIndices = [...getEffectiveMounts(level).keys()];
 
 	// This level becomes a loadout boundary. Later levels inherit it until
 	// another level explicitly defines its own mounts.
-	for (let i = currentLevel; i <= roadmap.maxLevel; i++) {
-		if (i > currentLevel && roadmap.ll[i].mounts)
+	for (let i = level; i <= roadmap.maxLevel; i++) {
+		if (i > level && roadmap.ll[i].mounts)
 			break;
 
+		mountTagUpdate(i, alteredMountIndices);
 		weaponTagUpdate(i, [mountIdx]);
 		refreshStats(i);
 		refreshBudgetPill(i);

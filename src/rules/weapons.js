@@ -25,7 +25,6 @@ import {
 	doesItemHaveTag,
 	isFrameIntegratedItem
 } from './installsCommon.js';
-import { mountTagUpdate } from '../ui/updates.js';
 
 const talents = cumulativeCatalog.talents;
 const licenses = cumulativeCatalog.licenses;
@@ -337,7 +336,7 @@ function updateMountSlotCount(level, mount) {
 }
 
 // reset level to inherited mounts if all weapon slots are empty
-function resetEmptyMounts(level) {
+export function resetEmptyMounts(level) {
 	const activeFrame = getEffectiveFrameId(level);
 	const mounts = roadmap.ll[level].mounts;
 	if (mounts && !mounts.some(mount =>
@@ -397,9 +396,6 @@ export function setWeaponSelection(level, mountIdx, slotIdx, id) {
 	// dynamic weapon slots for flex mounts
 	if (mount.type === 'Flex')
 		resizeFlexMount(level, mount);
-
-	if(resetEmptyMounts(level))
-		mountTagUpdate(level, [...Array(mounts.length).keys()]);
 }
 
 /**

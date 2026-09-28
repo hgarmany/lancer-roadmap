@@ -89,7 +89,8 @@ function applyWeaponTagManager(
 		const source = deepCopyMounts(level)?.[mountIdx].weapons[slotIdx];
 
 		if (moveAttachment({ id, source }))
-			mountTagUpdate(level, [mountIdx]);
+			for (let i = level; i < roadmap.maxLevel; i++)
+				mountTagUpdate(i, [mountIdx]);
 	});
 }
 
@@ -134,9 +135,7 @@ function dropTag(event, level, targetElement) {
 	if (moveAttachment({ id: transfer.id, target, source })) {
 		const update = isMount ? mountTagUpdate : weaponTagUpdate;
 		const mountIdxs = [srcMountIdx, tgtMountIdx].filter(Number.isFinite);
-		for (let i = level;
-			i == level || i < roadmap.maxLevel && !roadmap.ll[i].mounts;
-			i++)
+		for (let i = level; i <= roadmap.maxLevel; i++)
 			update(i, mountIdxs);
 	}
 }
@@ -239,7 +238,7 @@ export function tryInnateTags(level, tags, item, onlyMajorTags = true) {
 
 		const value = tag.id === TAGS.LIMITED ?
 			getItemNumUses(level, item) : tag.val;
-		tagPill.textContent = text.replace('{VAL}', value);
+		tagPill.textContent = text.replace('{VAL}', value ?? '');
 		tags.append(tagPill);
 	}
 
@@ -261,7 +260,7 @@ export function renderMountTags(level, attachments, mount) {
 		tag.append(label);
 
 		const mountIdx = Number(mount.dataset.mountIdx) ?? null;
-		const source = deepCopyMounts(level)?.[mountIdx];
+		let source = getEffectiveMounts(level)?.[mountIdx];
 		
 		if (source.type !== 'Heavy' ||
 			!attachments.some(item =>
@@ -285,9 +284,21 @@ export function renderMountTags(level, attachments, mount) {
 
 			remove.addEventListener('click', event => {
 				event.stopPropagation();
+				
+				let didDeepCopy = false;
+				if (!roadmap.ll[level].mounts) {
+					didDeepCopy = true;
+					const mounts = deepCopyMounts(level);
+					source = mounts[mountIdx];
+				}
 
-				if (moveAttachment({ id: attachment.id, source }))
-					mountTagUpdate(level, [mountIdx]);
+				// attempt move and, if successful, trigger visual refresh
+				if (moveAttachment({ id: attachment.id, source })) {
+					for (let i = level; i <= roadmap.maxLevel; i++)
+						mountTagUpdate(i, [mountIdx]);
+				}
+				else if (didDeepCopy)
+					roadmap.ll[level].mounts = null;
 			});
 
 			tag.append(remove);

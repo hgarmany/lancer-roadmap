@@ -266,7 +266,6 @@ export const SELECT_TEMPLATE = Object.freeze({
 			}
 
 			// if a mod, remove its application to a weapon
-			// CHECK: does this use the same mod id or does the system id differ
 			if (removedId && srcData.mods.has(removedId)) {
 				const mounts = deepCopyMounts(level);
 				for (const mount of mounts) {
