@@ -15,7 +15,8 @@ import {
 
 import {
 	getEffectiveMounts,
-	deepCopyMounts
+	deepCopyMounts,
+    isModEligible
 } from '../rules/weapons.js';
 
 import {
@@ -124,6 +125,9 @@ function dropTag(event, level, targetElement) {
 		target = tgtSlotIdx !== null ?
 			mounts[tgtMountIdx]?.weapons[tgtSlotIdx] : null;
 		if (!target.id)
+			return;
+
+		if (!isModEligible(transfer.id, target.id))
 			return;
 
 		const srcSlotIdx = Number(transfer.slotIdx) ?? null;

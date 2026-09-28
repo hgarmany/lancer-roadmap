@@ -392,10 +392,29 @@ export function setWeaponSelection(level, mountIdx, slotIdx, id) {
 	weapon.id = id ?? null;
 	if (!id)
 		delete weapon.attachments;
+	for (let i = weapon.attachments?.length ?? 0 - 1; i >= 0; i--) {
+		if (!isModEligible(weapon.attachments[i], weapon.id))
+			weapon.attachments.splice(i, 1);
+	}
 
 	// dynamic weapon slots for flex mounts
 	if (mount.type === 'Flex')
 		resizeFlexMount(level, mount);
+}
+
+export function isModEligible(modId, weaponId) {
+	const modData = srcData.mods.get(modId);
+	const weaponData = srcData.weapons.get(weaponId);
+	if (!modData ||
+		!weaponData ||
+		modData.allowed_types &&
+			!modData.allowed_types?.includes(weaponData.type) ||
+		modData.restricted_types?.includes(weaponData.type) ||
+		modData.allowed_sizes &&
+			!modData.allowed_sizes?.includes(weaponData.mount) ||
+		modData.restricted_sizes?.includes(weaponData.mount))
+		return false;
+	return true;
 }
 
 /**

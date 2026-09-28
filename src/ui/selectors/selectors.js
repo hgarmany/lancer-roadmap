@@ -618,6 +618,9 @@ export function renderWeaponSelector(
  * @returns {HTMLDivElement}
  */
 function renderSubItemDescription(item, ancestor = null) {
+	if (!item)
+		return null;
+
 	const container = document.createElement('div');
 
 	const itemDescription = item?.detail ?? item?.description ?? null;
@@ -731,6 +734,8 @@ function renderLicenseDescription({ level, id, selectedId }) {
 	return content;
 }
 
+const asArray = data => data ? (Array.isArray(data) ? data : [data]) : [];
+
 function renderFrameDescription({ level, id }) {
 	const frame = srcData.frames.get(id);
 	if (!frame)
@@ -781,8 +786,8 @@ function renderFrameDescription({ level, id }) {
 		}
 
 		const subItems = [
-			...coreSystem.actions ?? [],
-			...coreSystem.deployables ?? []
+			...asArray(coreSystem.actions),
+			...asArray(coreSystem.deployables)
 		];
 
 		for (const subItem of subItems) {
@@ -824,10 +829,21 @@ function renderSystemDescription({ level, id }) {
 		content.push(systemDescription);
 	}
 
+	if (srcData.mods.has(id)) {
+		if (item.on_attack)
+			content.push(renderTextAddendum(item.on_attack, 'On Attack'));
+		if (item.on_hit)
+			content.push(renderTextAddendum(item.on_hit, 'On Hit'));
+		if (item.on_crit)
+			content.push(renderTextAddendum(item.on_crit, 'On Crit'));
+		if (item.on_miss)
+			content.push(renderTextAddendum(item.on_miss, 'On Miss'));
+	}
+
 	const subItems = [
-		...item.ammo ?? [],
-		...item.actions ?? [],
-		...item.deployables ?? []
+		...asArray(item.ammo),
+		...asArray(item.actions),
+		...asArray(item.deployables)
 	];
 
 	for (const subItem of subItems)
@@ -862,7 +878,9 @@ function renderWeaponDescription({ level, id }) {
 	if (tags.childElementCount)
 		content.push(tags);
 
-	for (const profile of item.profiles ?? [item]) {
+	const profiles = [item].concat(item.profiles ?? []);
+	
+	for (const profile of profiles) {
 		if (profile.name !== item.name) {
 			const profileName = document.createElement('h4');
 			profileName.textContent = profile.name;
@@ -916,9 +934,9 @@ function renderWeaponDescription({ level, id }) {
 			content.push(renderTextAddendum(profile.on_miss, 'On Miss'));
 
 		const subItems = [
-			...profile.ammo ?? [],
-			...profile.actions ?? [],
-			...profile.deployables ?? []
+			...asArray(profile.ammo),
+			...asArray(profile.actions),
+			...asArray(profile.deployables)
 		];
 
 		for (const subItem of subItems)
