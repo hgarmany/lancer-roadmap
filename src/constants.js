@@ -1,5 +1,8 @@
 // constants.js
 
+export const INFO_BUBBLE_HOLD_DURATION = 500;
+export const TOUCH_DRAG_HOLD_DURATION = 300;
+export const TOUCH_MOVE_TOLERANCE = 10;
 export const MAX_MOUNT_COUNT = 3;
 
 export const STAT_DEFINITIONS = {

@@ -30,11 +30,19 @@ import {
 	TAGS
 } from '../rules/installsCommon.js';
 
+import {
+	TOUCH_DRAG_HOLD_DURATION,
+	TOUCH_MOVE_TOLERANCE
+} from '../constants.js';
+
 const MAJOR_TAGS = [TAGS.UNIQUE, TAGS.AI, TAGS.LIMITED, TAGS.EXOTIC];
 
 export const ATTACHMENT_TRANSFER_TYPE = 'application/x-lancer-attachment';
 
-function setAttachmentTransferData(event, level, attachmentData) {
+const touchDropTargets = new WeakMap();
+let touchDrag = null;
+
+function setAttachmentTransferData(event, attachmentData) {
 	const serializedData = JSON.stringify(attachmentData);
 	event.dataTransfer.effectAllowed = 'move';
 	event.dataTransfer.setData(ATTACHMENT_TRANSFER_TYPE, serializedData);
@@ -55,6 +63,198 @@ function getAttachmentTransferData(event) {
 	}
 }
 
+function isValidAttachmentTarget(level, attachmentData, target) {
+	const isMount = target.classList.contains('mount');
+	return attachmentData &&
+		level === Number(attachmentData.level) &&
+		(attachmentData.type === 'mount') === isMount &&
+		(isMount || target.value &&
+			target.classList.contains(attachmentData.type));
+}
+
+function dropTag(attachmentData, level, targetElement) {
+	if (!isValidAttachmentTarget(level, attachmentData, targetElement))
+		return;
+
+	const isMount = targetElement.classList.contains('mount');
+
+	const mounts = deepCopyMounts(level);
+	const tgtMountIdx = Number(targetElement.dataset.mountIdx);
+	const srcMountIdx = Number(attachmentData.mountIdx);
+
+	let target = null;
+	let source = null;
+
+	// acquire source and target roadmap data
+	if (isMount) {
+		target = tgtMountIdx !== null ? mounts[tgtMountIdx] : null;
+		source = srcMountIdx !== null ? mounts[srcMountIdx] : null;
+	}
+	else {
+		const tgtSlotIdx = Number(targetElement.dataset.slotIdx) ?? null;
+		target = tgtSlotIdx !== null ?
+			mounts[tgtMountIdx]?.weapons[tgtSlotIdx] : null;
+		if (!target.id)
+			return;
+
+		if (!isModEligible(attachmentData.id, target.id))
+			return;
+
+		const srcSlotIdx = Number(attachmentData.slotIdx) ?? null;
+		source = srcSlotIdx !== null ?
+			mounts[srcMountIdx]?.weapons[srcSlotIdx] : null;
+	}
+	
+	// attempt move and, if successful, trigger visual refresh
+	if (moveAttachment({ id: attachmentData.id, target, source })) {
+		const update = isMount ? mountTagUpdate : weaponTagUpdate;
+		const mountIdxs = [srcMountIdx, tgtMountIdx].filter(Number.isFinite);
+		for (let i = level; i <= roadmap.maxLevel; i++)
+			update(i, mountIdxs);
+	}
+}
+
+function getTouch(event, identifier) {
+	return [...event.touches, ...event.changedTouches]
+		.find(touch => touch.identifier === identifier);
+}
+
+function getTouchDropTarget(x, y, attachmentData) {
+	for (let element = document.elementFromPoint(x, y);
+			element; element = element.parentElement) {
+		const level = touchDropTargets.get(element);
+		if (level !== undefined &&
+			isValidAttachmentTarget(level, attachmentData, element))
+			return { element, level };
+	}
+
+	return null;
+}
+
+function setTouchDropTarget(target) {
+	if (touchDrag?.target?.element === target?.element)
+		return;
+
+	touchDrag?.target?.element.classList.remove('drag-focus');
+	if (touchDrag)
+		touchDrag.target = target;
+	target?.element.classList.add('drag-focus');
+}
+
+function moveTouchPreview(touch) {
+	if (!touchDrag?.preview)
+		return;
+
+	touchDrag.preview.style.left = `${touch.clientX}px`;
+	touchDrag.preview.style.top = `${touch.clientY}px`;
+}
+
+function endTouchDrag() {
+	clearTimeout(touchDrag?.timer);
+	touchDrag?.target?.element.classList.remove('drag-focus');
+	touchDrag?.preview?.remove();
+	document.removeEventListener('touchmove', handleTouchMove);
+	document.removeEventListener('touchend', handleTouchEnd);
+	document.removeEventListener('touchcancel', handleTouchCancel);
+	touchDrag = null;
+}
+
+function handleTouchMove(event) {
+	const touch = touchDrag && getTouch(event, touchDrag.identifier);
+	if (!touch)
+		return;
+
+	if (!touchDrag.active) {
+		if (Math.hypot(
+			touch.clientX - touchDrag.startX,
+			touch.clientY - touchDrag.startY
+		) > TOUCH_MOVE_TOLERANCE)
+			endTouchDrag();
+		return;
+	}
+
+	event.preventDefault();
+	moveTouchPreview(touch);
+	setTouchDropTarget(getTouchDropTarget(
+		touch.clientX, touch.clientY, touchDrag.transfer));
+}
+
+function handleTouchEnd(event) {
+	const touch = touchDrag && getTouch(event, touchDrag.identifier);
+	if (!touch)
+		return;
+
+	if (touchDrag.active) {
+		event.preventDefault();
+		const target = getTouchDropTarget(
+			touch.clientX, touch.clientY, touchDrag.transfer);
+
+		if (target)
+			dropTag(touchDrag.transfer, target.level, target.element);
+	}
+
+	endTouchDrag();
+}
+
+function handleTouchCancel(event) {
+	if (touchDrag && getTouch(event, touchDrag.identifier))
+		endTouchDrag();
+}
+
+function beginTouchDrag(event, attachmentData, tag) {
+	if (event.touches.length !== 1 || event.target.closest('.clear'))
+		return;
+
+	endTouchDrag();
+	const touch = event.touches[0];
+	touchDrag = {
+		identifier: touch.identifier,
+		startX: touch.clientX,
+		startY: touch.clientY,
+		transfer: attachmentData,
+		target: null,
+		preview: null,
+		active: false,
+		timer: setTimeout(() => {
+			if (!touchDrag)
+				return;
+
+			touchDrag.active = true;
+			touchDrag.preview = tag.cloneNode(true);
+			touchDrag.preview.querySelector('.clear')?.remove();
+			touchDrag.preview.classList.add('touch-drag-preview');
+			document.body.append(touchDrag.preview);
+			moveTouchPreview(touch);
+			setTouchDropTarget(getTouchDropTarget(
+				touch.clientX, touch.clientY, attachmentData));
+		}, TOUCH_DRAG_HOLD_DURATION)
+	};
+
+	document.addEventListener('touchmove', handleTouchMove, { passive: false });
+	document.addEventListener('touchend', handleTouchEnd, { passive: false });
+	document.addEventListener('touchcancel', handleTouchCancel);
+}
+
+function applyDragEventManagers(tag, attachmentData) {
+	let nativeDragBlocked = false;
+	tag.draggable = true;
+	tag.addEventListener('pointerdown', event => {
+		nativeDragBlocked = event.pointerType === 'mouse' &&
+			event.target.closest('.clear');
+	});
+	tag.addEventListener('dragstart', event => {
+		if (event.target.closest('.clear')) {
+			event.preventDefault();
+			return;
+		}
+
+		setAttachmentTransferData(event, attachmentData);
+	});
+	tag.addEventListener('touchstart', event => {
+		beginTouchDrag(event, attachmentData, tag);
+	}, { passive: true });
+}
+
 /**
  * Make an applied mod draggable and wire its removal button
  *
@@ -73,16 +273,8 @@ function applyWeaponTagManager(
 	slotIdx,
 	id
 ) {
-	tag.draggable = true;
-	tag.addEventListener('dragstart', event => {
-		if (event.target === removeButton) {
-			event.preventDefault();
-			return;
-		}
-
-		setAttachmentTransferData(event, level,
-			{ level, type: 'weapon', id, mountIdx, slotIdx });
-	});
+	applyDragEventManagers(tag,
+		{ level, type: 'weapon', id, mountIdx, slotIdx });
 
 	// remove mod from slot
 	removeButton.addEventListener('click', event => {
@@ -95,55 +287,6 @@ function applyWeaponTagManager(
 	});
 }
 
-function dropTag(event, level, targetElement) {
-	const isMount = targetElement.classList.contains('mount');
-	const transfer = getAttachmentTransferData(event);
-	
-	// reject drops into different levels or the wrong target type
-	if (!transfer ||
-		level !== Number(transfer.level) ||
-		(transfer.type === 'mount') != isMount)
-		return;
-
-	event.preventDefault();
-	event.stopPropagation();
-	
-	const mounts = deepCopyMounts(level);
-	const tgtMountIdx = Number(targetElement.dataset.mountIdx);
-	const srcMountIdx = Number(transfer.mountIdx);
-
-	let target = null;
-	let source = null;
-
-	// acquire source and target roadmap data
-	if (isMount) {
-		target = tgtMountIdx !== null ? mounts[tgtMountIdx] : null;
-		source = srcMountIdx !== null ? mounts[srcMountIdx] : null;
-	}
-	else {
-		const tgtSlotIdx = Number(targetElement.dataset.slotIdx) ?? null;
-		target = tgtSlotIdx !== null ?
-			mounts[tgtMountIdx]?.weapons[tgtSlotIdx] : null;
-		if (!target.id)
-			return;
-
-		if (!isModEligible(transfer.id, target.id))
-			return;
-
-		const srcSlotIdx = Number(transfer.slotIdx) ?? null;
-		source = srcSlotIdx !== null ?
-			mounts[srcMountIdx]?.weapons[srcSlotIdx] : null;
-	}
-	
-	// attempt move and, if successful, trigger visual refresh
-	if (moveAttachment({ id: transfer.id, target, source })) {
-		const update = isMount ? mountTagUpdate : weaponTagUpdate;
-		const mountIdxs = [srcMountIdx, tgtMountIdx].filter(Number.isFinite);
-		for (let i = level; i <= roadmap.maxLevel; i++)
-			update(i, mountIdxs);
-	}
-}
-
 /**
  * Assigns event listeners to a target so that it can receive
  * drag-and-drop tags
@@ -152,6 +295,8 @@ function dropTag(event, level, targetElement) {
  * @param {HTMLDivElement} target
  */
 export function applyAttachmentManager(level, target) {
+	touchDropTargets.set(target, level);
+
 	target.addEventListener('dragover', event => {
 		event.preventDefault();
 		if (!event.dataTransfer.types.includes(ATTACHMENT_TRANSFER_TYPE))
@@ -176,18 +321,23 @@ export function applyAttachmentManager(level, target) {
 			return;
 
 		target.classList.remove('drag-focus');
-		dropTag(event, level, target);
+		const attachmentData = getAttachmentTransferData(event);
+
+		if (!attachmentData ||
+			!isValidAttachmentTarget(level, attachmentData, target))
+			return;
+
+		event.preventDefault();
+		event.stopPropagation();
+		dropTag(attachmentData, level, target);
 	});
 }
 
-function renderAttachment(level, attachmentData) {
+function renderAttachment(attachmentData) {
 	const attachment = document.createElement('div');
 	attachment.className = `tag ${attachmentData.type}-tag`;
 	attachment.textContent = attachmentData.label;
-	attachment.draggable = true;
-	attachment.addEventListener('dragstart', event => {
-		setAttachmentTransferData(event, level, attachmentData);
-	});
+	applyDragEventManagers(attachment, attachmentData);
 
 	return attachment;
 }
@@ -208,7 +358,7 @@ export function renderAttachmentsMenu(level) {
 	menu.style.display = 'flex';
 	// populate tag menu
 	for (const attachment of attachmentList)
-		menu.append(renderAttachment(level, attachment));
+		menu.append(renderAttachment(attachment));
 
 	return menu;
 }
@@ -257,7 +407,6 @@ export function renderMountTags(level, attachments, mount) {
 	for (const attachment of attachments ?? []) {
 		const tag = document.createElement('div');
 		tag.className = 'tag mount-tag applied-tag';
-		tag.draggable = true;
 
 		const label = document.createElement('span');
 		label.textContent = attachment.label;
@@ -270,15 +419,11 @@ export function renderMountTags(level, attachments, mount) {
 			!attachments.some(item =>
 				item.id === ATTACHMENT_ID.SUPERHEAVY_BRACING)) {
 
-			tag.addEventListener('dragstart', event => {
-				setAttachmentTransferData(event, level,
-					{
-						level,
-						type: 'mount',
-						id: attachment.id,
-						mountIdx: Number(mount.dataset.mountIdx)
-					}
-				);
+			applyDragEventManagers(tag, {
+				level,
+				type: 'mount',
+				id: attachment.id,
+				mountIdx: Number(mount.dataset.mountIdx)
 			});
 		
 			const remove = document.createElement('button');

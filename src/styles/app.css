@@ -1223,6 +1223,13 @@ select {
 	cursor: grabbing;
 }
 
+.touch-drag-preview {
+	position: fixed;
+	z-index: 8;
+	pointer-events: none;
+	transform: translate(-50%, -50%);
+}
+
 .applied-tag {
 	padding-right: 1.15rem; 
 }

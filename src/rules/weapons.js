@@ -403,6 +403,9 @@ export function setWeaponSelection(level, mountIdx, slotIdx, id) {
 }
 
 export function isModEligible(modId, weaponId) {
+	if (srcData.coreBonuses.has(modId))
+		return true;
+
 	const modData = srcData.mods.get(modId);
 	const weaponData = srcData.weapons.get(weaponId);
 	if (!modData ||

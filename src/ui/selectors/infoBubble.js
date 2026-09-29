@@ -1,11 +1,14 @@
 // ui/selectors/infoBubble.js
 
+import {
+	INFO_BUBBLE_HOLD_DURATION,
+	TOUCH_MOVE_TOLERANCE
+} from '../../constants.js';
+
 const infoBubble = document.getElementById('selector-info-bubble');
 
 export const infoSources = new WeakMap();
 
-const PRESS_HOLD_DURATION = 500; // delay to show on press-and-hold, ms
-const MOVE_TOLERANCE = 10; // touchscreen wiggle margin on press-and-hold, px
 const HIDE_COOLDOWN = 150; // delay to hide, ms
 
 let infoBubbleHideTimer = null;
@@ -177,6 +180,10 @@ document.addEventListener('pointerout', event => {
 document.addEventListener('pointerdown', event => {
 	if (event.pointerType === 'mouse' || !event.isPrimary)
 		return;
+	if (event.target.closest('[draggable="true"]')) {
+		cancelPressAndHold();
+		return;
+	}
 
 	const request = getInfoBubbleContext(event.target);
 	if (!request) {
@@ -197,7 +204,7 @@ document.addEventListener('pointerdown', event => {
 				expires: performance.now() + 1000
 			};
 		}
-	}, PRESS_HOLD_DURATION);
+	}, INFO_BUBBLE_HOLD_DURATION);
 
 	// store new press-and-hold state
 	pressAndHold = {
@@ -213,7 +220,7 @@ document.addEventListener('pointerdown', event => {
 document.addEventListener('pointermove', event => {
 	if (pressAndHold?.pointerId === event.pointerId && Math.hypot(
 		event.clientX - pressAndHold.x,
-		event.clientY - pressAndHold.y) > MOVE_TOLERANCE)
+		event.clientY - pressAndHold.y) > TOUCH_MOVE_TOLERANCE)
 		cancelPressAndHold();
 }, { passive: true });
 
