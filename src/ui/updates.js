@@ -134,8 +134,9 @@ export function coreBonusUpdate(selector, level) {
 	for (let i = level; i <= roadmap.maxLevel; i++) {
 		if (i === level || roadmap.ll[i].mounts)
 			reconfigureMounts(i);
-		const alteredMountIndices = updateAppliedAttachments(i);
-		mountTagUpdate(i, alteredMountIndices);
+		updateAppliedAttachments(i);
+		mountTagUpdate(i, [...getEffectiveMounts(i).keys()]);
+		weaponTagUpdate(i, [...getEffectiveMounts(i).keys()]);
 		refreshStats(i);
 		redrawMounts(i);
 		refreshAttachmentMenu(i);
@@ -249,14 +250,9 @@ export function frameUpdate(selector, level) {
 	refreshSelectors(SELECT_TEMPLATE.FRAME, level);
 }
 
-export function weaponTagUpdate(level, mountIndexes) {
-	const affectedMounts = [...new Set(mountIndexes)];
-
-	const freeModList = document.getElementById(`attachments-ll-${level}`);
-	if (freeModList)
-		freeModList.replaceWith(renderAttachmentsMenu(level));
-
-	for (const mountIdx of affectedMounts) {
+export function weaponTagUpdate(level, mountIndices) {
+	refreshAttachmentMenu(level);
+	for (const mountIdx of [...new Set(mountIndices)]) {
 		const mount =
 			document.getElementById(`mount-${mountIdx}-ll-${level}`);
 		if (mount)

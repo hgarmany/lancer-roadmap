@@ -595,8 +595,7 @@ export function renderWeaponSelector(
 	selector.dataset.mountIdx = mountIdx;
 	selector.dataset.slotIdx = slotIdx;
 
-	if (!srcData.weapons.get(selectedId)?.no_mods)
-		applyAttachmentManager(level, selector);
+	applyAttachmentManager(level, selector);
 	selector.append(renderWeaponTags(
 		level, weapon, mountIdx, slotIdx));
 

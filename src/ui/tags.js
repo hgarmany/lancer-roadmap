@@ -16,7 +16,7 @@ import {
 import {
 	getEffectiveMounts,
 	deepCopyMounts,
-    isModEligible
+	isModEligible
 } from '../rules/weapons.js';
 
 import {
@@ -305,6 +305,14 @@ export function applyAttachmentManager(level, target) {
 		const transfer = getAttachmentTransferData(event);
 		if (!target.value && !target.classList.contains('mount') ||
 			!target.classList.contains(transfer.type))
+			return;
+
+		if (srcData.mods.get(transfer.id) &&
+			srcData.weapons.get(target.value)?.no_mods)
+			return;
+
+		if (srcData.coreBonuses.get(transfer.id) &&
+			srcData.weapons.get(target.value)?.no_core_bonus)
 			return;
 
 		event.dataTransfer.dropEffect = 'move';

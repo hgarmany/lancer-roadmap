@@ -231,7 +231,7 @@ export function updateAppliedAttachments(level) {
 
 		// weapon attachments
 		for (const weapon of mounts[i].weapons) {
-			weapon.attachments?.filter(attachment => {
+			weapon.attachments = weapon.attachments?.filter(attachment => {
 				if (eligibleIds.includes(attachment))
 					return true;
 				mountChanged = true;

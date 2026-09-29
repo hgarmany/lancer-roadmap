@@ -403,13 +403,16 @@ export function setWeaponSelection(level, mountIdx, slotIdx, id) {
 }
 
 export function isModEligible(modId, weaponId) {
-	if (srcData.coreBonuses.has(modId))
+	const weaponData = srcData.weapons.get(weaponId);
+	if (!weaponData)
+		return false;
+
+	if (srcData.coreBonuses.has(modId) && !weaponData.no_core_bonus)
 		return true;
 
 	const modData = srcData.mods.get(modId);
-	const weaponData = srcData.weapons.get(weaponId);
 	if (!modData ||
-		!weaponData ||
+		weaponData.no_mods ||
 		modData.allowed_types &&
 			!modData.allowed_types?.includes(weaponData.type) ||
 		modData.restricted_types?.includes(weaponData.type) ||
@@ -417,6 +420,7 @@ export function isModEligible(modId, weaponId) {
 			!modData.allowed_sizes?.includes(weaponData.mount) ||
 		modData.restricted_sizes?.includes(weaponData.mount))
 		return false;
+
 	return true;
 }
 
