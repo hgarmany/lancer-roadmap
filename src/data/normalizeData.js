@@ -49,8 +49,10 @@ function getLicenses(gameData) {
 
 			const newLicense = {
 				id,
-				name: frame?.name,
+				name: frame.name,
 				source: frame.source,
+				lcp_id: frame.lcp_id,
+				lcp_name: frame.lcp_name,
 				ranks: Array.from({ length: 3 }, (_, idx) => licenseItems
 					.filter(item => item.license_level - 1 === idx)
 					.map(item => item.id)

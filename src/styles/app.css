@@ -841,6 +841,11 @@ select {
 	z-index: 10;
 }
 
+.source-info {
+	text-align: right;
+	font-style: italic;
+}
+
 .core-power-info {
 	border-top: 0.25rem dotted var(--text-muted);
 	margin-top: 1rem;

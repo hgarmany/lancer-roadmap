@@ -602,6 +602,25 @@ export function renderWeaponSelector(
 	return selector;
 }
 
+function renderSourceInfo(item) {
+	const license = srcData.licenses.get(item.license_id);
+	if (license || item.lcp_id) {
+		const source = document.createElement('p');
+		source.className = 'source-info';
+		if (license) {
+			source.textContent =
+				`${license.name} ${ROMAN_NUMERALS[item.license_level - 1]}`;
+		}
+		if (license && item.lcp_id)
+			source.textContent += ' - ';
+		if (item.lcp_id)
+			source.textContent += item?.lcp_name;
+
+		return source;
+	}
+
+	return null;
+}
 
 /**
  * General solution to several sub-items attached to selector items:
@@ -694,12 +713,16 @@ function renderSubItemDescription(item, ancestor = null) {
 /* info bubble content renderers for complex items */
 
 function renderTalentDescription({ level, id, selectedId }) {
-	const rank = getTalentRank(level, id, selectedId);
-	const rankData = srcData.talents.get(id)?.ranks?.[rank];
-	if (!rankData)
+	const talent = srcData.talents.get(id);
+	if (!talent)
 		return null;
 
+	const rank = getTalentRank(level, id, selectedId);
+	const rankData = talent.ranks[rank];
+
 	const content = [];
+
+	content.push(renderSourceInfo(talent));
 
 	const rankName = document.createElement('h3');
 	rankName.textContent = rankData.name;
@@ -742,6 +765,8 @@ function renderFrameDescription({ level, id }) {
 
 	const content = [];
 
+	content.push(renderSourceInfo(frame));
+
 	const tags = document.createElement('span');
 	tags.className = 'tags';
 	for (const type of frame.mechtype ?? []) {
@@ -778,7 +803,9 @@ function renderFrameDescription({ level, id }) {
 				level, id: integratedId });
 			const systemElements = renderSystemDescription({
 				level, id: integratedId });
-			for (const element of weaponElements ?? systemElements) {
+			const displayElements = (weaponElements ?? systemElements)
+				.filter(Boolean);
+			for (const element of displayElements) {
 				element.classList.add('indent');
 				corePowerDiv.append(element);
 			}
@@ -814,6 +841,8 @@ function renderSystemDescription({ level, id }) {
 		return null;
 
 	const content = [];
+
+	content.push(renderSourceInfo(item));
 
 	const tags = renderSystemTags(level, id, true);
 	if (tags.childElementCount) {
@@ -867,6 +896,8 @@ function renderWeaponDescription({ level, id }) {
 		return null;
 
 	const content = [];
+
+	content.push(renderSourceInfo(item));
 
 	const header = document.createElement('h4');
 	header.textContent = `${item.mount} ${item.type}`;

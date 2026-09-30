@@ -231,8 +231,17 @@ function getMergedData() {
 
 	for (const lcp of getStoredPackages()) {
 		for (const collectionName of LCP_COLLECTIONS) {
+			const items = normalizeCollection(
+				lcp.collections?.[collectionName]
+			);
+
 			mergedData[collectionName].push(
-				...normalizeCollection(lcp.collections?.[collectionName]));
+				...items.map(item => ({
+					...item,
+					lcp_id: lcp.id,
+					lcp_name: lcp.name
+				}))
+			);
 		}
 	}
 
@@ -283,6 +292,7 @@ async function importLCP(file) {
 	try {
 		const lcp = parseLcpArchive(
 			new Uint8Array(await file.arrayBuffer()), file.name);
+		console.log(lcp);
 		pushLcpChange(lcp, true);
 	}
 	catch (error) {
