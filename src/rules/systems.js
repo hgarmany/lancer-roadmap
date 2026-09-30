@@ -83,9 +83,20 @@ export function isSystemEligible(level, id, selectedId = null) {
 			.find(system => system?.id === id) !== undefined)
 		return false;
 
-	// talent-issued systems must match rank exactly
-	if (candidate.talent_item)
-		return candidate.talent_rank == talents[level].get(candidate.talent_id);
+	// talent-issued systems must match rank exactly and not be integrated
+	if (candidate.talent_item) {
+		const rank = talents[level].get(candidate.talent_id) ?? 0;
+		if (rank < candidate.talent_rank)
+			return false;
+		const talentData = srcData.talents.get(candidate.talent_id);
+		if (!talentData)
+			return false;
+		const rankData = talentData.ranks[candidate.talent_rank - 1];
+		if (rankData.integrated?.includes(id))
+			return false;
+
+		return true;
+	}
 
 	// gms systems are always eligible
 	if (!candidate.license_id || candidate.license_id === 'GMS')
@@ -113,8 +124,23 @@ export function hasEligibleSystem(level) {
 
 export function getIntegratedSystemIds(level) {
 	const frame = srcData.frames.get(activeFrame[level]);
-	const integratedIds = frame?.core_system.integrated ?? null;
-	return integratedIds?.length ? integratedIds : [];
+	const integratedIds = [
+		...frame?.core_system?.integrated ?? []
+	];
+
+	for (const [talentId, rankVal] of talents[level].entries()) {
+		const rankData = srcData.talents.get(talentId)?.ranks;
+		const startRank = Math.min(rankVal - 1, rankData.length);
+		for (let rank = startRank; rank >= 0; rank--) {
+			const systemIds = rankData[rank].integrated;
+			if (systemIds) {
+				integratedIds.push(...systemIds);
+				break;
+			}
+		}
+	}
+
+	return integratedIds;
 }
 
 export function configureSystems(level) {

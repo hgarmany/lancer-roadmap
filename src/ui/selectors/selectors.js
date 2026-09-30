@@ -603,20 +603,28 @@ export function renderWeaponSelector(
 }
 
 function renderSourceInfo(item) {
-	const license = srcData.licenses.get(item.license_id);
-	if (license || item.lcp_id) {
-		const source = document.createElement('p');
-		source.className = 'source-info';
-		if (license) {
-			source.textContent =
-				`${license.name} ${ROMAN_NUMERALS[item.license_level - 1]}`;
-		}
-		if (license && item.lcp_id)
-			source.textContent += ' - ';
-		if (item.lcp_id)
-			source.textContent += item?.lcp_name;
+	const sourceLabel = document.createElement('p');
+	sourceLabel.className = 'source-info';
 
-		return source;
+	let source = null;
+	let rank = null;
+
+	if ((source = srcData.licenses.get(item.license_id))) {
+		sourceLabel.textContent =
+			`${source.name} ${ROMAN_NUMERALS[item.license_level - 1]}`;
+	}
+	else if ((source = srcData.talents.get(item.talent_id))) {
+		sourceLabel.textContent =
+			`${source.name} ${ROMAN_NUMERALS[item.talent_rank - 1]}`;
+	}
+
+	if (source || item.lcp_id) {
+		if (source && item.lcp_id)
+			sourceLabel.textContent += ' - ';
+		if (item.lcp_id)
+			sourceLabel.textContent += item?.lcp_name;
+
+		return sourceLabel;
 	}
 
 	return null;

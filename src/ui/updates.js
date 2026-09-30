@@ -107,6 +107,7 @@ export function talentUpdate(selector, level) {
 		reconfigureMounts(i);
 		redrawMounts(i);
 		refreshAttachmentMenu(i);
+		refreshIntegratedSystems(i);
 		refreshElectiveSystemList(i);
 	}
 

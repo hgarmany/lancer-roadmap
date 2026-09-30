@@ -1295,6 +1295,10 @@ select {
 	gap: 0.25rem;
 }
 
+.systems-integrated {
+	display: flex;
+}
+
 .systems .select-group {
 	display: grid !important;
 	grid-template-rows: repeat(4, auto);
