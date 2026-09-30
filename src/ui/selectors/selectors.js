@@ -635,11 +635,13 @@ function renderSourceInfo(item) {
  * @param {Object} ancestor
  * @returns {HTMLDivElement}
  */
-function renderSubItemDescription(item, ancestor = null) {
+function renderSubItemDescription(item, ancestor = null, doIndent = false) {
 	if (!item)
 		return null;
 
 	const container = document.createElement('div');
+	if (doIndent)
+		container.className = 'indent';
 
 	const itemDescription = item?.detail ?? item?.description ?? null;
 
@@ -710,6 +712,30 @@ function renderSubItemDescription(item, ancestor = null) {
 	return container;
 }
 
+function renderAttachedEquipment(level, item) {
+	const container = document.createElement('div');
+	container.className = 'indent';
+
+	const equipment = [
+		...item.special_equipment ?? [],
+		...item.integrated ?? []
+	];
+
+	for (const equipmentId of equipment) {
+		const weaponElements = renderWeaponDescription({
+			level, id: equipmentId, isSubItem: true });
+		const systemElements = renderSystemDescription({
+			level, id: equipmentId, isSubItem: true });
+
+		const displayElements = (weaponElements ?? systemElements)
+			.filter(Boolean);
+		for (const element of displayElements)
+			container.append(element);
+	}
+
+	return container;
+}
+
 /* info bubble content renderers for complex items */
 
 function renderTalentDescription({ level, id, selectedId }) {
@@ -731,6 +757,8 @@ function renderTalentDescription({ level, id, selectedId }) {
 		rankData.description?.replace(/<\s*\/?br\s*[\/]?>/gi, '\n\n');
 
 	content.push(rankName, rankDescription);
+
+	content.push(renderAttachedEquipment(level, rankData));
 
 	for (const action of rankData.actions ?? [])
 		content.push(renderSubItemDescription(action, rankData));
@@ -798,18 +826,7 @@ function renderFrameDescription({ level, id }) {
 			}));
 		}
 
-		for (const integratedId of coreSystem.integrated ?? []) {
-			const weaponElements = renderWeaponDescription({
-				level, id: integratedId });
-			const systemElements = renderSystemDescription({
-				level, id: integratedId });
-			const displayElements = (weaponElements ?? systemElements)
-				.filter(Boolean);
-			for (const element of displayElements) {
-				element.classList.add('indent');
-				corePowerDiv.append(element);
-			}
-		}
+		corePowerDiv.append(renderAttachedEquipment(level, coreSystem));
 
 		const subItems = [
 			...asArray(coreSystem.actions),
@@ -835,19 +852,26 @@ function renderFrameDescription({ level, id }) {
 	return content;
 }
 
-function renderSystemDescription({ level, id }) {
+function renderSystemDescription({ level, id, isSubItem = false }) {
 	const item = srcData.systems.get(id);
 	if (!item)
 		return null;
 
 	const content = [];
 
-	content.push(renderSourceInfo(item));
+	if (!isSubItem)
+		content.push(renderSourceInfo(item));
 
 	const tags = renderSystemTags(level, id, true);
 	if (tags.childElementCount) {
 		tags.style.justifyContent = 'right';
 		content.push(tags);
+	}
+
+	if (isSubItem) {
+		const header = document.createElement('h4');
+		header.textContent = `Integrated System: ${item.name}`;
+		content.push(header);
 	}
 
 	if (item.effect) {
@@ -875,7 +899,7 @@ function renderSystemDescription({ level, id }) {
 	];
 
 	for (const subItem of subItems)
-		content.push(renderSubItemDescription(subItem, item));
+		content.push(renderSubItemDescription(subItem, item, isSubItem));
 
 	return content;
 }
@@ -890,17 +914,19 @@ function renderTextAddendum(data, name) {
 	return textElement;
 }
 
-function renderWeaponDescription({ level, id }) {
+function renderWeaponDescription({ level, id, isSubItem = false }) {
 	const item = srcData.weapons.get(id);
 	if (!item)
 		return null;
 
 	const content = [];
 
-	content.push(renderSourceInfo(item));
+	if (!isSubItem)
+		content.push(renderSourceInfo(item));
 
 	const header = document.createElement('h4');
-	header.textContent = `${item.mount} ${item.type}`;
+	header.textContent = isSubItem ?
+		`Integrated Weapon: ${item.name}` : `${item.mount} ${item.type}`;
 	content.push(header);
 
 	// add weapon tags

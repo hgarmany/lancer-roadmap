@@ -332,6 +332,14 @@ html[data-theme="gms-dark"] .license-mark.dark {
 	user-select: none;
 }
 
+.menu-btn {
+	background-color: color-mix(in srgb, var(--background) 12%, var(--primary));
+}
+
+.menu-btn:hover {
+	background-color: color-mix(in srgb, var(--on-strong) 25%, var(--primary));
+}
+
 /* arrow */
 #lcp-manager > summary::after {
 	border-inline: 0.25rem solid transparent;
@@ -450,8 +458,7 @@ html[data-theme="gms-dark"] .license-mark.dark {
 }
 
 #lcp-manager > summary:hover,
-#lcp-manager[open] > summary,
-.menu-btn:hover {
+#lcp-manager[open] > summary {
 	background-color: color-mix(in srgb, var(--on-strong) 25%, transparent);
 }
 
@@ -1396,10 +1403,6 @@ select {
 	border: 1px solid var(--border);
 	padding: 1rem;
 	background-color: var(--surface);
-}
-
-.modal-text-box .menu-btn:not(:hover) {
-	background-color: var(--primary);
 }
 
 .tutorial-selector-examples {

@@ -252,8 +252,9 @@ export function redrawMount(level, mountIdx) {
 	const mounts = getEffectiveMounts(level);
 	const mount = document.getElementById(`mounts-list-ll-${level}`)
 		.children[mountIdx];
-	mount.replaceWith(
-		renderMount(level, mountIdx, mounts[mountIdx]));
+	if (mount)
+		mount.replaceWith(
+			renderMount(level, mountIdx, mounts[mountIdx]));
 
 	// single-level selector refresh
 	refreshWeaponSelectors(level, level);
