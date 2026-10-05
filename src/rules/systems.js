@@ -86,13 +86,13 @@ export function isSystemEligible(level, id, selectedId = null) {
 	// talent-issued systems must match rank exactly and not be integrated
 	if (candidate.talent_item) {
 		const rank = talents[level].get(candidate.talent_id) ?? 0;
-		if (rank < candidate.talent_rank)
-			return false;
 		const talentData = srcData.talents.get(candidate.talent_id);
 		if (!talentData)
 			return false;
 		const rankData = talentData.ranks[candidate.talent_rank - 1];
-		if (rankData.integrated?.includes(id))
+		if (rankData.integrated?.includes(id) ||
+			rankData.exclusive ? rank != candidate.talent_rank :
+				rank < candidate.talent_rank)
 			return false;
 
 		return true;
@@ -130,6 +130,8 @@ export function getIntegratedSystemIds(level) {
 
 	for (const [talentId, rankVal] of talents[level].entries()) {
 		const rankData = srcData.talents.get(talentId)?.ranks;
+		if (!rankData)
+			continue;
 		const startRank = Math.min(rankVal - 1, rankData.length);
 		for (let rank = startRank; rank >= 0; rank--) {
 			const systemIds = rankData[rank].integrated;
