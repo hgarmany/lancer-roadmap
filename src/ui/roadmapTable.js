@@ -33,28 +33,6 @@ import {
 	roadmap
 } from '../data/roadmap.js';
 
-export function renderLevelLabel(level) {
-	const label = document.createElement('div');
-	label.id = `label-ll-${level}`;
-	label.className = 'level-tab';
-	label.dataset.ll = level;
-	label.textContent = `LL${level}`;
-
-	if (level != 0 && level % 3 == 0)
-		label.classList.add('cb-level');
-
-	const clipboardBuild = document.createElement('button');
-	clipboardBuild.className = 'clipboard-build menu-btn';
-	clipboardBuild.title = 'Copy build stats at this level to clipboard';
-	clipboardBuild.innerHTML = '<i class="fa fa-copy"></i>';
-	clipboardBuild.addEventListener('click', () =>
-		navigator.clipboard.writeText(writeBuild(level)))
-
-	label.append(clipboardBuild);
-
-	return label;
-}
-
 function renderMenu(level, template) {
 	const menu = document.createElement('div');
 	menu.className = 'menu';
@@ -208,7 +186,7 @@ function renderSystemsCell(level) {
 	];
 }
 
-const CELL = {
+export const CELL = {
 	LEVELUP: {
 		name: 'level-up',
 		render: renderLevelUp
@@ -231,7 +209,7 @@ const CELL = {
 	}
 }
 
-function renderCellType(cellType, level) {
+export function renderCellType(cellType, level) {
 	const cell = document.createElement('td');
 	cell.className = `${cellType.name}-cell`;
 	if ((cellType === CELL.MOUNTS && roadmap.ll[level].mounts == null) ||

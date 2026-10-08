@@ -13,9 +13,16 @@ import {
 } from '../data/cumulativeCatalog.js';
 
 import {
-	renderLevelLabel,
+	renderLevelCarouselCard
+} from './roadmapCarousel.js';
+
+import {
 	renderLevelRow
 } from './roadmapTable.js';
+
+import {
+	renderLevelLabel
+} from './renderModules.js';
 
 import {
 	refreshSelectors,
@@ -52,6 +59,8 @@ export const lcpManager = document.getElementById('lcp-manager');
 const lcpPanel = document.getElementById('lcp-panel');
 export const fileInput = document.getElementById('lcp-file');
 export const lcpStatus = document.getElementById('lcp-status');
+
+const carouselShell = document.getElementById('roadmap-carousel-shell');
 
 const levelRail = document.querySelector(".level-rail");
 const roadmapShell = document.getElementById("roadmap-shell");
@@ -257,6 +266,13 @@ export function configureToolMenu() {
 }
 
 export function initializeRenderPipeline() {
+	carouselShell.append(
+		...Array.from(
+			{ length: roadmap.maxLevel + 1 },
+			(_, index) => renderLevelCarouselCard(index)
+		)
+	);
+	
 	tableBody.append(
 		...Array.from(
 			{ length: roadmap.maxLevel + 1 },

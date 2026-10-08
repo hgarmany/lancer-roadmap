@@ -123,6 +123,30 @@ export function renderPackageList(packages, isImport, eventLCP) {
 	}
 }
 
+export function renderLevelLabel(level) {
+	const label = document.createElement('div');
+	label.id = `label-ll-${level}`;
+	label.className = 'level-tab';
+	label.dataset.ll = level;
+
+	const text = document.createElement('span');
+	text.textContent = `LL${level}`;
+
+	if (level != 0 && level % 3 == 0)
+		label.classList.add('cb-level');
+
+	const clipboardBuild = document.createElement('button');
+	clipboardBuild.className = 'clipboard-build menu-btn';
+	clipboardBuild.title = 'Copy build stats at this level to clipboard';
+	clipboardBuild.innerHTML = '<i class="fa fa-copy"></i>';
+	clipboardBuild.addEventListener('click', () =>
+		navigator.clipboard.writeText(writeBuild(level)))
+
+	label.append(text, clipboardBuild);
+
+	return label;
+}
+
 /**
  * 
  * 
