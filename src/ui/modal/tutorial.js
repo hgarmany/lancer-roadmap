@@ -11,14 +11,31 @@ import {
 } from '../selectors/selectors.js';
 
 import {
+	MOUNT_SLOTS
+} from '../../rules/weapons.js';
+
+import {
 	isFrameIntegratedItem
 } from '../../rules/installsCommon.js';
+
+const exampleMount = MOUNT_SLOTS['Main/Aux'];
 
 function isExampleSystemAvailable(id, licenseId) {
 	if (!id)
 		return true;
 
 	const item = srcData.systems.get(id);
+	return item.source === 'GMS' ||
+		item.license_id === licenseId && Number(item.license_level) === 1;
+}
+
+function isExampleWeaponAvailable(slotIdx, id, licenseId) {
+	if (!id)
+		return true;
+
+	const item = srcData.weapons.get(id);
+	if (!exampleMount[slotIdx].allowedWeaponMounts.includes(item.mount))
+		return false;
 	return item.source === 'GMS' ||
 		item.license_id === licenseId && Number(item.license_level) === 1;
 }
@@ -114,10 +131,38 @@ const tutorialContent = `
 			</button>
 			a roadmap from a file over any existing data.
 		</p>
+	</section>
+	<section class="modal-text-box">
+		<h2>Tags</h2>
+		<p>
+			Many equipment choices have important properties called "tags" that
+			impact their use or eligibility. All tags are listed when hovering
+			over a system/weapon's name, and the AI, Exotic, Limited, and
+			Unique tags are displayed under all selected equipment that has
+			them.
+		</p>
+		<p>
+			Additionally, special mount and weapon tags may become available to
+			you based on the core bonuses, systems, and weapons you select.
+			These tags can be dragged and dropped onto valid targets for
+			assignment.
+		</p>
+		<div class="tutorial-selector-examples">
+			<div>
+				<span class="inline-header">Mod</span>
+			</div>
+			<div class="select-group">
+				<span class="inline-header">Weapons</span>
+				<div data-example-3></div>
+				<div data-example-4></div>
+			</div>
+		</div>
 	</section>`;
 
 let exampleLicenseId = null;
 let systemSelector;
+let weaponSelector1;
+let weaponSelector2;
 
 const exampleSystem = { ...SELECT_TEMPLATE.SYSTEM };
 exampleSystem.getEligibility = ({ id }) => isExampleSystemAvailable(id, exampleLicenseId);
@@ -125,6 +170,22 @@ exampleSystem.changeEvent = selector => {
 	setSelectorClass(selector, 'occupied', selector.value);
 	setSelectorClass(selector, 'error', selector.value &&
 		!isExampleSystemAvailable(selector.value, exampleLicenseId));
+};
+
+const exampleWeapon1 = { ...SELECT_TEMPLATE.WEAPON };
+exampleWeapon1.getEligibility = ({ id }) => isExampleWeaponAvailable(0, id, exampleLicenseId);
+exampleWeapon1.changeEvent = selector => {
+	setSelectorClass(selector, 'occupied', selector.value);
+	setSelectorClass(selector, 'error', selector.value &&
+		!isExampleWeaponAvailable(0, selector.value, exampleLicenseId));
+};
+
+const exampleWeapon2 = { ...SELECT_TEMPLATE.WEAPON };
+exampleWeapon2.getEligibility = ({ id }) => isExampleWeaponAvailable(1, id, exampleLicenseId);
+exampleWeapon2.changeEvent = selector => {
+	setSelectorClass(selector, 'occupied', selector.value);
+	setSelectorClass(selector, 'error', selector.value &&
+		!isExampleWeaponAvailable(1, selector.value, exampleLicenseId));
 };
 
 const exampleLicense = { ...SELECT_TEMPLATE.LICENSE };
@@ -137,6 +198,14 @@ exampleLicense.changeEvent = selector => {
 		setOptionHidden(option,
 			!isExampleSystemAvailable(option.value, exampleLicenseId));
 	exampleSystem.changeEvent(systemSelector);
+	for (const option of weaponSelector1.querySelectorAll('.selector-option'))
+		setOptionHidden(option,
+			!isExampleWeaponAvailable(0, option.value, exampleLicenseId));
+	exampleWeapon1.changeEvent(weaponSelector1);
+	for (const option of weaponSelector2.querySelectorAll('.selector-option'))
+		setOptionHidden(option,
+			!isExampleWeaponAvailable(1, option.value, exampleLicenseId));
+	exampleWeapon2.changeEvent(weaponSelector2);
 };
 
 export function render({ close }) {
@@ -148,6 +217,12 @@ export function render({ close }) {
 		renderSelector(1, null, exampleLicense));
 	systemSelector = renderSelector(1, null, exampleSystem);
 	content.querySelector('[data-example-2]').replaceWith(systemSelector);
+	weaponSelector1 = renderSelector(1, null, exampleWeapon1,
+		{ slot: MOUNT_SLOTS['Main/Aux'][0] });
+	content.querySelector('[data-example-3]').replaceWith(weaponSelector1);
+	weaponSelector2 = renderSelector(1, null, exampleWeapon2,
+		{ slot: MOUNT_SLOTS['Main/Aux'][1] });
+	content.querySelector('[data-example-4]').replaceWith(weaponSelector2);
 
 	return content;
 }

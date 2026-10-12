@@ -20,7 +20,7 @@ const licenses = cumulativeCatalog.licenses;
  */
 export function getLicenseRank(level, id, selectedId = null) {
 	const rank = licenses[level].get(id) ?? 0;
-	return (id === selectedId) ? rank - 1 : rank;
+	return (rank && id === selectedId) ? rank - 1 : rank;
 }
 
 /**

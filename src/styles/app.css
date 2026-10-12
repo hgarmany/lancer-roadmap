@@ -704,7 +704,7 @@ html[data-exotics=true] .exotics-name::after {
 }
 
 .roadmap-table .cell-content,
-.roadmap-table .select-group,
+.select-group,
 .stat-bubble,
 #modal-dialog {
 	display: flex;
@@ -716,7 +716,7 @@ html[data-exotics=true] .exotics-name::after {
 	margin-bottom: 0.25rem;
 }
 
-.roadmap-table .select-group {
+.select-group {
 	gap: 0.375rem;
 	margin-bottom: 0.25rem;
 }

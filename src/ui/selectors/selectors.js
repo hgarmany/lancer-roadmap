@@ -781,7 +781,7 @@ function renderLicenseDescription({ level, id, selectedId }) {
 
 	const content = document.createElement('p');
 
-	const rank = getLicenseRank(level, id, selectedId);
+	const rank = getLicenseRank(level, id, selectedId) ?? 0;
 	for (const itemId of license.ranks[rank]) {
 		const item = srcData.systems.get(itemId) ??
 			srcData.weapons.get(itemId);
