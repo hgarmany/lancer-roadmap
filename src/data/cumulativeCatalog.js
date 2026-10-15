@@ -198,7 +198,7 @@ export function initializeCatalog() {
 			calculateMechStats(cumulativeCatalog, level);
 	}
 
-	console.log(cumulativeCatalog);
+	// console.log(cumulativeCatalog);
 }
 
 export function resizeCatalog(newMaxLevel) {

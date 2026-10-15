@@ -253,7 +253,7 @@ function getMergedData() {
  */
 export function loadSourceData() {
 	srcData = getNormalizedData(getMergedData());
-	console.log(srcData);
+	// console.log(srcData);
 }
 
 function pushLcpChange(lcp, isImport) {
@@ -292,7 +292,7 @@ async function importLCP(file) {
 	try {
 		const lcp = parseLcpArchive(
 			new Uint8Array(await file.arrayBuffer()), file.name);
-		console.log(lcp);
+		// console.log(lcp);
 		pushLcpChange(lcp, true);
 	}
 	catch (error) {

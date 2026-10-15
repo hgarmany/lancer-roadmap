@@ -295,7 +295,7 @@ function getLabel(type, id, dataset, rankContext = null) {
 		const rank = rankContext.func(
 			rankContext.level, id, rankContext.selectedId);
 		const showRank = rank < item.ranks?.length;
-		return `${item.name} ${ROMAN_NUMERALS[rank]}`;
+		return showRank ? `${item.name} ${ROMAN_NUMERALS[rank]}` : item.name;
 	}
 
 	return item.name;
@@ -513,7 +513,7 @@ export function renderSelector(
 		selector.value = option.value;
 		value.textContent = option.textContent;
 		template.changeEvent(selector, level);
-		console.log(roadmap);
+		// console.log(roadmap);
 		setSelectorOpen(selector, false);
 	});
 
@@ -600,6 +600,98 @@ export function renderWeaponSelector(
 		level, weapon, mountIdx, slotIdx));
 
 	return selector;
+}
+
+/**
+ * Creates and injects a set of selectors connected to each other
+ * but not the roadmap
+ * Useful for tutorials/examples of selector behavior
+ * 
+ * @param {HTMLElement} root
+ * @param {Map<string, Object>} stateMap
+ * @param {Array<Object>} definitions
+ * 
+ * @return {Array<Object>}
+ */
+export function renderDummySelectors(root, definitions, stateMap = new Map()) {
+	const selectors = new Map();
+	const entries = new Map();
+
+	function isAvailable(entry, id) {
+		return entry.definition.isAvailable?.({
+			key: entry.definition.key,
+			id,
+			data: stateMap.get(entry.definition.key),
+			stateMap
+		}) ?? true;
+	}
+
+	function refresh(key = null) {
+		const targets = key ? [entries.get(key)] : entries.values();
+		for (const entry of targets) {
+			if (!entry)
+				continue;
+
+			const selectedId = entry.selector.value || null;
+			for (const option of entry.selector.querySelectorAll('.selector-option'))
+				setOptionHidden(option,
+					!isAvailable(entry, option.value));
+
+			setSelectorClass(entry.selector, 'occupied', selectedId);
+			setSelectorClass(entry.selector, 'error', selectedId &&
+				!isAvailable(entry, selectedId));
+		}
+	}
+
+	function applyChange(entry) {
+		const selectedId = entry.selector.value || null;
+		const data = stateMap.get(entry.definition.key);
+		data.id = selectedId;
+		entry.definition.onChange?.({
+			key: entry.definition.key,
+			selector: entry.selector,
+			data,
+			stateMap
+		});
+		for (const key of entry.definition.closeOnChange ?? [])
+			setSelectorOpen(selectors.get(key), false);
+		refresh();
+	}
+
+	for (const definition of definitions) {
+		// evaluate definition for a valid target and unique key
+		const placeholder = root.querySelector(definition.target);
+		if (!placeholder)
+			throw new Error(`Dummy selector target not found: ${definition.key}`);
+		if (!definition.key || entries.has(definition.key))
+			throw new Error('Dummy selector definitions need unique keys.');
+
+		const entry = { definition, selector: null, template: null };
+		const template = entry.template = {
+			...definition.template,
+			getEligibility: ({ id }) => isAvailable(entry, id),
+			changeEvent: () => applyChange(entry)
+		};
+		const data = stateMap.get(definition.key) ?? {
+			...definition.initialData
+		};
+		if (!Object.hasOwn(data, 'id'))
+			data.id = definition.selectedId ?? null;
+		stateMap.set(definition.key, data);
+		entry.selector = renderSelector(
+			definition.level ?? 1,
+			data.id,
+			template,
+			definition.context
+		);
+		entries.set(definition.key, entry);
+		selectors.set(definition.key, entry.selector);
+
+		placeholder.replaceWith(entry.selector);
+	}
+
+	refresh();
+	return selectors;
 }
 
 function renderSourceInfo(item) {
@@ -753,6 +845,8 @@ function renderTalentDescription({ level, id, selectedId }) {
 
 	const rank = getTalentRank(level, id, selectedId);
 	const rankData = talent.ranks[rank];
+	if (!rankData)
+		return null;
 
 	const content = [];
 
@@ -779,9 +873,12 @@ function renderLicenseDescription({ level, id, selectedId }) {
 	if (!license)
 		return null;
 
+	const rank = getLicenseRank(level, id, selectedId) ?? 0;
+	if (!license.ranks[rank])
+		return null;
+
 	const content = document.createElement('p');
 
-	const rank = getLicenseRank(level, id, selectedId) ?? 0;
 	for (const itemId of license.ranks[rank]) {
 		const item = srcData.systems.get(itemId) ??
 			srcData.weapons.get(itemId);

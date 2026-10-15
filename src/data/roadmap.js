@@ -94,7 +94,7 @@ export function createDefaultRoadmap() {
 		)
 	};
 
-	console.log(roadmap);
+	// console.log(roadmap);
 }
 
 export function getEffectiveSystems(level) {

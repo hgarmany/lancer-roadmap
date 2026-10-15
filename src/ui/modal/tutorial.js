@@ -3,11 +3,8 @@ import {
 } from '../../data/loader.js';
 
 import {
-	renderSelector,
-	SELECT_TEMPLATE,
-	setOptionHidden,
-	setSelectorClass,
-	setSelectorOpen
+	renderDummySelectors,
+	SELECT_TEMPLATE
 } from '../selectors/selectors.js';
 
 import {
@@ -15,9 +12,11 @@ import {
 } from '../../rules/weapons.js';
 
 import {
-	isFrameIntegratedItem
-} from '../../rules/installsCommon.js';
+	createDummyAttachmentManager
+} from '../tags.js';
 
+const TUTORIAL_MOD_TRANSFER_TYPE = 'application/x-lancer-tutorial-mod';
+const EXAMPLE_MOD_ID = 'example-mod';
 const exampleMount = MOUNT_SLOTS['Main/Aux'];
 
 function isExampleSystemAvailable(id, licenseId) {
@@ -104,7 +103,7 @@ const tutorialContent = `
 		<div class="tutorial-selector-examples">
 			<div class="inline-components">
 				<span class="inline-header">License</span>
-				<div data-example-1></div>
+				<div example-license></div>
 			</div>
 			<div class="inline-components">
 				<span class="inline-header">System</span>
@@ -148,8 +147,9 @@ const tutorialContent = `
 			assignment.
 		</p>
 		<div class="tutorial-selector-examples">
-			<div>
+			<div class="select-group">
 				<span class="inline-header">Mod</span>
+				<div class="attachment-menu" data-example-mod></div>
 			</div>
 			<div class="select-group">
 				<span class="inline-header">Weapons</span>
@@ -159,70 +159,76 @@ const tutorialContent = `
 		</div>
 	</section>`;
 
-let exampleLicenseId = null;
-let systemSelector;
-let weaponSelector1;
-let weaponSelector2;
+function renderTutorialMod(name) {
+	const tag = document.createElement('div');
+	tag.className = 'tag mod-tag';
+	tag.title = 'Drag to an occupied selection bubble';
 
-const exampleSystem = { ...SELECT_TEMPLATE.SYSTEM };
-exampleSystem.getEligibility = ({ id }) => isExampleSystemAvailable(id, exampleLicenseId);
-exampleSystem.changeEvent = selector => {
-	setSelectorClass(selector, 'occupied', selector.value);
-	setSelectorClass(selector, 'error', selector.value &&
-		!isExampleSystemAvailable(selector.value, exampleLicenseId));
-};
+	const label = document.createElement('span');
+	label.textContent = name;
+	tag.append(label);
 
-const exampleWeapon1 = { ...SELECT_TEMPLATE.WEAPON };
-exampleWeapon1.getEligibility = ({ id }) => isExampleWeaponAvailable(0, id, exampleLicenseId);
-exampleWeapon1.changeEvent = selector => {
-	setSelectorClass(selector, 'occupied', selector.value);
-	setSelectorClass(selector, 'error', selector.value &&
-		!isExampleWeaponAvailable(0, selector.value, exampleLicenseId));
-};
-
-const exampleWeapon2 = { ...SELECT_TEMPLATE.WEAPON };
-exampleWeapon2.getEligibility = ({ id }) => isExampleWeaponAvailable(1, id, exampleLicenseId);
-exampleWeapon2.changeEvent = selector => {
-	setSelectorClass(selector, 'occupied', selector.value);
-	setSelectorClass(selector, 'error', selector.value &&
-		!isExampleWeaponAvailable(1, selector.value, exampleLicenseId));
-};
-
-const exampleLicense = { ...SELECT_TEMPLATE.LICENSE };
-exampleLicense.getEligibility = () => true;
-exampleLicense.changeEvent = selector => {
-	exampleLicenseId = selector.value || null;
-	setSelectorClass(selector, 'occupied', exampleLicenseId);
-	setSelectorOpen(systemSelector, false);
-	for (const option of systemSelector.querySelectorAll('.selector-option'))
-		setOptionHidden(option,
-			!isExampleSystemAvailable(option.value, exampleLicenseId));
-	exampleSystem.changeEvent(systemSelector);
-	for (const option of weaponSelector1.querySelectorAll('.selector-option'))
-		setOptionHidden(option,
-			!isExampleWeaponAvailable(0, option.value, exampleLicenseId));
-	exampleWeapon1.changeEvent(weaponSelector1);
-	for (const option of weaponSelector2.querySelectorAll('.selector-option'))
-		setOptionHidden(option,
-			!isExampleWeaponAvailable(1, option.value, exampleLicenseId));
-	exampleWeapon2.changeEvent(weaponSelector2);
-};
+	const clear = document.createElement('button');
+	clear.type = 'button';
+	clear.className = 'clear';
+	clear.title = 'Remove mod';
+	tag.append(clear);
+	return { tag, clear };
+}
 
 export function render({ close }) {
 	const content = document.createElement('div');
 	content.className = 'modal-content';
 	content.innerHTML = tutorialContent;
+	const modSource = content.querySelector('[data-example-mod]');
+	const { tag: modTag, clear: clearMod } = renderTutorialMod('Example Mod');
 
-	content.querySelector('[data-example-1]').replaceWith(
-		renderSelector(1, null, exampleLicense));
-	systemSelector = renderSelector(1, null, exampleSystem);
-	content.querySelector('[data-example-2]').replaceWith(systemSelector);
-	weaponSelector1 = renderSelector(1, null, exampleWeapon1,
-		{ slot: MOUNT_SLOTS['Main/Aux'][0] });
-	content.querySelector('[data-example-3]').replaceWith(weaponSelector1);
-	weaponSelector2 = renderSelector(1, null, exampleWeapon2,
-		{ slot: MOUNT_SLOTS['Main/Aux'][1] });
-	content.querySelector('[data-example-4]').replaceWith(weaponSelector2);
+	const stateMap = new Map();
+	const attachments =
+		createDummyAttachmentManager(stateMap, TUTORIAL_MOD_TRANSFER_TYPE);
+	attachments.register({
+		id: EXAMPLE_MOD_ID,
+		tag: modTag,
+		source: modSource,
+		clear: clearMod
+	});
+
+	const selectors = renderDummySelectors(
+		content,
+		[
+			{
+				key: 'license',
+				target: '[example-license]',
+				template: SELECT_TEMPLATE.LICENSE,
+				closeOnChange: ['system']
+			},
+			{
+				key: 'system',
+				target: '[data-example-2]',
+				template: SELECT_TEMPLATE.SYSTEM,
+				isAvailable: ({ id, stateMap }) =>
+					isExampleSystemAvailable(id, stateMap.get('license')?.id)
+			},
+			...exampleMount.map((slot, index) => ({
+				key: `weapon-${index}`,
+				target: `[data-example-${index + 3}]`,
+				template: SELECT_TEMPLATE.WEAPON,
+				context: { slot },
+				initialData: { attachments: [] },
+				isAvailable: ({ id, stateMap }) =>
+					isExampleWeaponAvailable(index, id,
+						stateMap.get('license')?.id),
+				onChange: ({ key, data }) => {
+					if (!data.id)
+						attachments.clearSelector(key);
+				}
+			}))
+		],
+		stateMap
+	);
+
+	for (const key of exampleMount.map((_, index) => `weapon-${index}`))
+		attachments.registerTarget(key, selectors.get(key));
 
 	return content;
 }

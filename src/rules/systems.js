@@ -134,7 +134,7 @@ export function getIntegratedSystemIds(level) {
 			continue;
 		const startRank = Math.min(rankVal - 1, rankData.length);
 		for (let rank = startRank; rank >= 0; rank--) {
-			const systemIds = rankData[rank].integrated;
+			const systemIds = rankData[rank]?.integrated;
 			if (systemIds) {
 				integratedIds.push(...systemIds);
 				break;

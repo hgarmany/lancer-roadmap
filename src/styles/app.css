@@ -1415,6 +1415,10 @@ select {
 	gap: 0.5rem 2rem;
 }
 
+.tutorial-selector-examples > * {
+	min-width: 5rem;
+}
+
 .inline-components {
 	display: flex;
 	align-items: center;
